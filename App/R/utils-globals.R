@@ -1,6 +1,7 @@
 utils::globalVariables(c(
   "justica",
   "numero",
-  "rowid",
-  "tribunal"
+  "id",
+  "tribunal",
+  "value"
 ))

@@ -18,7 +18,7 @@ app_ui <- function() {
         shinyWidgets::pickerInput(
           "tribunal",
           label = "Tribunais",
-          lista_tribunais,
+          sort(lista_tribunais),
           "TJSP",
           options = list(
             "actions-box" = TRUE,
@@ -26,9 +26,9 @@ app_ui <- function() {
             "selected-text-format" = "count > 3",
             style = "btn-dark"
           ),
-          multiple = TRUE
-        ),
-        shiny::actionButton("executar", "Executar!")
+          multiple = FALSE
+        )#,
+        # shiny::actionButton("executar", "Executar!")
       ),
       navbar = bs4Dash::dashboardHeader(
         rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
@@ -63,6 +63,9 @@ app_ui <- function() {
           bs4Dash::bs4TabItem(
             tabName = "menu_incos",
             mod_incos_ui("incos_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_upload"
           )
         )
       ),

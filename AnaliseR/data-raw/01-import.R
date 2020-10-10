@@ -24,7 +24,8 @@ ler_basic_one <- function(file) {
     tidyr::unnest(orgaoJulgador) %>%
     dplyr::bind_cols(dplyr::select(da, where(~!is.list(.x)))) %>%
     janitor::clean_names() %>%
-    dplyr::mutate(dplyr::across(c(where(~!is.list(.x)), -valor_causa), .fns = as.character))
+    dplyr::mutate(dplyr::across(c(where(~!is.list(.x))), .fns = as.character)) %>%
+    tibble::rowid_to_column()
 }
 
 ler_basic <- function(file) {
@@ -54,10 +55,7 @@ purrr::walk2(arquivos_nested$jj, arquivos_nested$data, ~{
   }
 })
 
-
-
 # bind dos dados processados ----------------------------------------------
-
 
 library(magrittr)
 
@@ -81,35 +79,34 @@ da_basic <- fs::dir_ls("../dados/processados/basicos/") %>%
 readr::write_rds(da_basic, "../dados/processados/da_basic.rds", compress = "xz")
 
 da_basic_transform <- da_basic %>%
-  select(-assunto) %>%
-  mutate(valor_causa = as.numeric(valor_causa)) %>%
-  rowid_to_column() %>%
-  mutate(justica_tribunal = fs::path_file(fs::path_ext_remove(file))) %>%
-  separate(justica_tribunal, c("justica", "tribunal"), sep = "_") %>%
-  mutate(
-    tribunal = str_remove(tribunal, "-"),
+  dplyr::select(-assunto) %>%
+  dplyr::mutate(valor_causa = as.numeric(valor_causa)) %>%
+  tibble::rowid_to_column("id") %>%
+  dplyr::mutate(justica_tribunal = fs::path_file(fs::path_ext_remove(file))) %>%
+  tidyr::separate(justica_tribunal, c("justica", "tribunal"), sep = "_") %>%
+  dplyr::mutate(
+    tribunal = stringr::str_remove(tribunal, "-"),
     tribunal = toupper(tribunal),
-    tribunal = str_replace(tribunal, "DF$", "DFT"),
-    tribunal = str_replace(tribunal, "(?<=TRT)([1-9])$", "0\\1")
+    tribunal = stringr::str_replace(tribunal, "DF$", "DFT"),
+    tribunal = stringr::str_replace(tribunal, "(?<=TRT)([1-9])$", "0\\1")
   )
 
 readr::write_rds(da_basic_transform, "../dados/processados/da_basic_transform.rds", compress = "xz")
 
 ## export para python
-# da_basic_transform %>%
-#   select(-assunto) %>%
-#   feather::write_feather("../dados/processados/da_basic_transform.feather")
+da_basic_transform %>%
+  feather::write_feather("../dados/processados/da_basic_transform.feather")
 
-da_basic_assuntos <- da_basic %>%
-  rowid_to_column() %>%
-  select(rowid, assunto) %>%
-  unnest(assunto)
-
-da_basic_assuntos %>%
-  unchop(assuntoLocal)
-
-da_basic_assuntos %>%
-  feather::write_feather("../dados/processados/da_basic_assuntos.feather")
+# da_basic_assuntos <- da_basic %>%
+#   rowid_to_column() %>%
+#   select(rowid, assunto) %>%
+#   unnest(assunto)
+#
+# da_basic_assuntos %>%
+#   unchop(assuntoLocal)
+#
+# da_basic_assuntos %>%
+#   feather::write_feather("../dados/processados/da_basic_assuntos.feather")
 
 
 

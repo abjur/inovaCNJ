@@ -26,8 +26,8 @@ app_server <- function( input, output, session ) {
 
   app_data <- shiny::reactive({
 
-    input$executar
-    shiny::isolate({
+    # input$executar
+    # shiny::isolate({
 
       if (length(input$tribunal) == 0) {
         tribunais <- unique(inovaCNJ::da_incos$tribunal)
@@ -42,7 +42,7 @@ app_server <- function( input, output, session ) {
         incos = incos
       )
 
-    })
+    # })
 
 
 

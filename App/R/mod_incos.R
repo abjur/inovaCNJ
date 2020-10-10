@@ -105,7 +105,7 @@ mod_incos_server <- function(id, app_data) {
         content = function(file) {
           app_data()$incos %>%
             dplyr::select(
-              rowid, numero, justica, tribunal,
+              id, numero, justica, tribunal,
               dplyr::matches(paste("^(inc_|sol_|info_).*", nm[.x]))
             ) %>%
             writexl::write_xlsx(file)

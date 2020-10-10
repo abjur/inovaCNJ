@@ -5,7 +5,7 @@
 \alias{da_incos}
 \title{da_incos}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 100000 rows and 25 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 100000 rows and 27 columns.
 }
 \usage{
 da_incos

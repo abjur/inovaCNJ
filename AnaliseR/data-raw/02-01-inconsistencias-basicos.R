@@ -36,7 +36,7 @@ inc_numero_justica_tribunal_fun <- function(da) {
       tribunal_nproc = str_sub(numero, 15L, 16L)
     ) %>%
     transmute(
-      rowid,
+      id,
       inc_justica = case_when(
         is.na(id_justica) ~ "Justiça inválida",
         (justica_nproc != id_justica) & tribunal != "STJ" ~ "Justiça inválida",
@@ -70,7 +70,7 @@ inc_classe_fun <- function(da) {
 
   da %>%
     transmute(
-      rowid,
+      id,
       info_classe = classe_processual,
       inc_classe = case_when(
         is.na(classe_processual) ~ "Vazio",
@@ -106,7 +106,7 @@ inc_digito_fun <- function(da) {
       )
     ) %>%
     transmute(
-      rowid,
+      id,
       info_digito = numero,
       sol_digito = dig_calculado,
       inc_digito
@@ -130,7 +130,7 @@ inc_data_ajuizamento_fun <- function(da) {
       ano_cnj != lubridate::year(data) ~ "Ano de ajuizamento diferente de ano do processo"
     )) %>%
     transmute(
-      rowid,
+      id,
       info_data = data_ajuizamento,
       inc_data
     )
@@ -159,7 +159,7 @@ inc_sistema_fun <- function(da) {
       !dsc_sistema %in% 1:8 ~ "Sistema inconsistente"
     )) %>%
     transmute(
-      rowid,
+      id,
       info_sistema = dsc_sistema,
       inc_sistema,
       sol_sistema = sistema_provavel
@@ -181,7 +181,7 @@ inc_proc_el_fun <- function(da) {
       !proc_el %in% 1:2 ~ "Código de processo eletrônico inconsistente"
     )) %>%
     transmute(
-      rowid,
+      id,
       info_eletronico = proc_el,
       inc_eletronico,
       sol_eletronico
@@ -203,7 +203,7 @@ inc_valor_fun <- function(da) {
       valor_causa > valor_corte ~ "Valor acima do esperado para o tribunal"
     )) %>%
     transmute(
-      rowid,
+      id,
       info_valor = valor_causa,
       inc_valor
     ) %>%
@@ -228,7 +228,7 @@ inc_orgao_fun <- function(da) {
 
   da %>%
     transmute(
-      rowid,
+      id,
       info_orgao = codigo_orgao,
       inc_orgao = case_when(
         is.na(codigo_orgao) ~ "Vazio",
@@ -244,15 +244,17 @@ inc_orgao_fun <- function(da) {
 # readr::write_rds(mapa, "data-raw/p02_01_mapa_brasil.rds", compress = "xz")
 
 library(sf)
-mapa <- readr::read_rds("data-raw/p02_01_mapa_brasil.rds") %>%
-  mutate(code_muni = as.character(code_muni))
 
 inc_municipio_fun <- function(da) {
   message("municipio")
 
+  mapa <- readr::read_rds("data-raw/p02_01_mapa_brasil.rds") %>%
+    mutate(code_muni = as.character(code_muni))
+
+
   da %>%
     transmute(
-      rowid,
+      id,
       numero,
       code_muni = str_pad(codigo_municipio_ibge, 7, "left", "0")
     ) %>%
@@ -264,7 +266,7 @@ inc_municipio_fun <- function(da) {
     ) %>%
     left_join(forosCNJ::da_foro_comarca, c("id_justica", "id_tribunal", "id_foro")) %>%
     transmute(
-      rowid,
+      id,
       info_municipio = code_muni,
       inc_municipio = "Código do município não é compatível com base do IBGE",
       sol_municipio = ibge
@@ -285,9 +287,9 @@ list_incos <- ls()[str_detect(ls(), "^inc_")] %>%
   purrr::map(~get(.x)(da_basic_transform))
 
 da_inicial <- da_basic_transform %>%
-  select(rowid, justica, tribunal)
+  select(id, rowid, file_json, justica, tribunal)
 da_incos <- list_incos %>%
-  reduce(left_join, by = "rowid", .init = da_inicial) %>%
+  reduce(left_join, by = "id", .init = da_inicial) %>%
   filter_at(vars(starts_with("inc_")), any_vars(!is.na(.)))
 
 readr::write_rds(
