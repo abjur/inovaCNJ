@@ -8,8 +8,7 @@ Authors@R:
              comment = c(ORCID = "0000-0002-1680-6389")),
       person('Bruno', 'Daleffi', 
              email = 'bdaleffi@abj.org.br', 
-             role = c('aut'),
-             comment = c(ORCID = "0000-0002-1680-6389")),
+             role = c('aut')),
       person('Caio', 'Lente', 
              email = 'clente@abj.org.br', 
              role = c('aut')),
@@ -36,7 +35,8 @@ Imports:
     jsonlite,
     dplyr,
     writexl,
-    stringr
+    stringr,
+    purrr
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
