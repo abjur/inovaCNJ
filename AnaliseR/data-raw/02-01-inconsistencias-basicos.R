@@ -1,18 +1,6 @@
 library(tidyverse)
 
-da_basic <- readr::read_rds("../dados/processados/da_basic.rds") %>%
-  mutate(valor_causa = as.numeric(valor_causa)) %>%
-  rowid_to_column() %>%
-  mutate(justica_tribunal = fs::path_file(fs::path_ext_remove(file))) %>%
-  separate(justica_tribunal, c("justica", "tribunal"), sep = "_")
-
-da_basic_transform <- da_basic %>%
-  mutate(
-    tribunal = str_remove(tribunal, "-"),
-    tribunal = toupper(tribunal),
-    tribunal = str_replace(tribunal, "DF$", "DFT"),
-    tribunal = str_replace(tribunal, "(?<=TRT)([1-9])$", "0\\1")
-  )
+da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
 
 #' esse código cria bases com id e coluna para cada possível inconsistência.
 #' as colunas sempre apresentam uma descrição da inconsistência
@@ -22,11 +10,10 @@ da_basic_transform <- da_basic %>%
 #' inc_xxx: inconsistência do problema xxx
 #' sol_xxx: solução do problema xxx
 
-
-
 # número incoerente com tribunal / justiça --------------------------------
 
-inc_numero_justica_tribunal <- function(da) {
+inc_numero_justica_tribunal_fun <- function(da) {
+  message("justica")
 
   da %>%
     mutate(id_justica = case_when(
@@ -48,23 +35,31 @@ inc_numero_justica_tribunal <- function(da) {
       justica_nproc = str_sub(numero, 14L, 14L),
       tribunal_nproc = str_sub(numero, 15L, 16L)
     ) %>%
-    mutate(
+    transmute(
+      rowid,
       inc_justica = case_when(
         is.na(id_justica) ~ "Justiça inválida",
         (justica_nproc != id_justica) & tribunal != "STJ" ~ "Justiça inválida",
         is.na(id_tribunal) ~ "Tribunal inválido",
         (tribunal_nproc != id_tribunal) & !tribunal %in% c("STJ", "TST", "STM") ~ "Tribunal inválido"
+      ),
+      sol_justica = paste0(justica_nproc, tribunal_nproc),
+      sol_justica = case_when(
+        str_detect(sol_justica, "^0") ~ NA_character_,
+        TRUE ~ sol_justica
       )
-    )
+    ) %>%
+    filter(!is.na(inc_justica))
 
 }
-
-
 
 # classe fora da SGT ------------------------------------------------------
 
 
-inc_classe <- function(da) {
+inc_classe_fun <- function(da) {
+
+  message("classe")
+
   classe_sgt <- readr::read_delim(
     delim = ";",
     "../dados/brutos/sgt_classes.csv",
@@ -74,97 +69,231 @@ inc_classe <- function(da) {
     filter(!is.na(codigo))
 
   da %>%
-    mutate(inc_classe_sgt = case_when(
-      is.na(classe_processual) ~ "Vazio",
-      !classe_processual %in% classe_sgt$codigo ~ "Classe fora da SGT"
-    ))
+    transmute(
+      rowid,
+      info_classe = classe_processual,
+      inc_classe = case_when(
+        is.na(classe_processual) ~ "Vazio",
+        !classe_processual %in% classe_sgt$codigo ~ "Classe fora da SGT"
+      )
+    ) %>%
+    filter(!is.na(inc_classe))
 }
-
 
 # digito verificador ------------------------------------------------------
 
+calc_dig <- function(num) {
+  NNNNNNN <- substr(num, 1L, 7L)
+  AAAA <- substr(num, 8L, 11L)
+  JTR <- substr(num, 12L, 14L)
+  OOOO <- substr(num, 15L, 18L)
+  n1 <- sprintf("%02d", as.numeric(NNNNNNN)%%97)
+  n2 <- sprintf("%02d", as.numeric(sprintf("%s%s%s", n1, AAAA, JTR))%%97)
+  sprintf("%02d", 98-((as.numeric(sprintf("%s%s", n2, OOOO))*100)%%97))
+}
+
+inc_digito_fun <- function(da) {
+  message("digito")
+
+  da %>%
+    mutate(
+      dig = str_sub(numero, 8, 9),
+      num_sub = paste0(str_sub(numero, 1L, 7L), str_sub(numero, 10L, 20L)),
+      dig_calculado = calc_dig(num_sub),
+      inc_digito = case_when(
+        is.na(numero) ~ "Vazio",
+        dig != dig_calculado ~ "Dígito inválido"
+      )
+    ) %>%
+    transmute(
+      rowid,
+      info_digito = numero,
+      sol_digito = dig_calculado,
+      inc_digito
+    )
+}
+
+
 # data ajuizamento --------------------------------------------------------
+
+inc_data_ajuizamento_fun <- function(da) {
+  message("data de ajuizamento")
+  da %>%
+    mutate(
+      data = data_ajuizamento,
+      data = str_sub(data, 1L, 8L),
+      data = lubridate::ymd(data, quiet = TRUE),
+      ano_cnj = str_sub(numero, 10L, 13L)
+    ) %>%
+    mutate(inc_data = case_when(
+      is.na(data) ~ "Data em formato incorreto",
+      ano_cnj != lubridate::year(data) ~ "Ano de ajuizamento diferente de ano do processo"
+    )) %>%
+    transmute(
+      rowid,
+      info_data = data_ajuizamento,
+      inc_data
+    )
+}
 
 # sistema com código bugado -----------------------------------------------
 # 1 – Pje, 2 – Projudi, 3 – SAJ, 4 – EPROC, 5 – Apolo, 6 – Themis, 7 – Libra, 8 – Outros;
 
+inc_sistema_fun <- function(da) {
+  message("sistema")
+  da %>%
+    group_by(justica, tribunal) %>%
+    mutate(
+      n_sistema = length(dsc_sistema),
+      sistema_provavel = dsc_sistema[which.max(n_sistema)]
+    ) %>%
+    ungroup() %>%
+    mutate(sistema_provavel = case_when(
+      sistema_provavel %in% 1:8 ~ sistema_provavel,
+      str_detect(tribunal, "TRE|TRT") ~ "1",
+      str_detect(tribunal, "TJAL") ~ "3",
+      TRUE ~ NA_character_
+    )) %>%
+    mutate(inc_sistema = case_when(
+      is.na(dsc_sistema) ~ "Vazio",
+      !dsc_sistema %in% 1:8 ~ "Sistema inconsistente"
+    )) %>%
+    transmute(
+      rowid,
+      info_sistema = dsc_sistema,
+      inc_sistema,
+      sol_sistema = sistema_provavel
+    ) %>%
+    filter(!is.na(inc_sistema))
+}
+
 # proc eletrônico com código bugado ---------------------------------------
 
+inc_proc_el_fun <- function(da) {
+  message("eletronico")
+  da %>%
+    mutate(
+      ano_distribuicao = str_sub(numero, 10, 13),
+      sol_eletronico = if_else(ano_distribuicao >= 2015, "1", "2")
+    ) %>%
+    mutate(inc_eletronico = case_when(
+      is.na(proc_el) ~ "Vazio",
+      !proc_el %in% 1:2 ~ "Código de processo eletrônico inconsistente"
+    )) %>%
+    transmute(
+      rowid,
+      info_eletronico = proc_el,
+      inc_eletronico,
+      sol_eletronico
+    ) %>%
+    filter(!is.na(inc_eletronico))
+}
 
-
-# combinacoes raras classe-assunto ----------------------------------------
-
-# codigo ibge incoerente --------------------------------------------------
 
 # valor da causa aberrante ------------------------------------------------
 
-# grau sup inconsistente --------------------------------------------------
+inc_valor_fun <- function(da) {
+  message("valor")
+  da %>%
+    group_by(justica, tribunal) %>%
+    mutate(valor_corte = quantile(valor_causa, probs = .99, na.rm = TRUE)) %>%
+    ungroup() %>%
+    mutate(inc_valor = case_when(
+      valor_causa < 0 ~ "Valor da causa menor que zero",
+      valor_causa > valor_corte ~ "Valor acima do esperado para o tribunal"
+    )) %>%
+    transmute(
+      rowid,
+      info_valor = valor_causa,
+      inc_valor
+    ) %>%
+    filter(!is.na(inc_valor))
+}
 
-# orgao vazio
 
-# competencia -------------------------------------------------------------
+
+# orgao vazio ou inconsistente --------------------------------------------
+
+inc_orgao_fun <- function(da) {
+
+  message("orgao")
+
+  orgaos_base <- readr::read_delim(
+    delim = ";",
+    "../dados/brutos/mpm_serventias.csv",
+    col_types = cols(.default = col_character())
+  ) %>%
+    distinct(codigo = SEQ_ORGAO) %>%
+    filter(!is.na(codigo))
+
+  da %>%
+    transmute(
+      rowid,
+      info_orgao = codigo_orgao,
+      inc_orgao = case_when(
+        is.na(codigo_orgao) ~ "Vazio",
+        !codigo_orgao %in% orgaos_base$codigo ~ "Classe fora do Anexo II CNJ"
+      )
+    ) %>%
+    filter(!is.na(inc_orgao))
+}
+
+# codigo ibge incoerente --------------------------------------------------
+
+# mapa <- geobr::read_municipality(year = 2019)
+# readr::write_rds(mapa, "data-raw/p02_01_mapa_brasil.rds", compress = "xz")
+
+library(sf)
+mapa <- readr::read_rds("data-raw/p02_01_mapa_brasil.rds") %>%
+  mutate(code_muni = as.character(code_muni))
+
+inc_municipio_fun <- function(da) {
+  message("municipio")
+
+  da %>%
+    transmute(
+      rowid,
+      numero,
+      code_muni = str_pad(codigo_municipio_ibge, 7, "left", "0")
+    ) %>%
+    anti_join(mapa, "code_muni") %>%
+    mutate(
+      id_justica = str_sub(numero, 14, 14),
+      id_tribunal = str_sub(numero, 15, 16),
+      id_foro = str_sub(numero, 17, 20)
+    ) %>%
+    left_join(forosCNJ::da_foro_comarca, c("id_justica", "id_tribunal", "id_foro")) %>%
+    transmute(
+      rowid,
+      info_municipio = code_muni,
+      inc_municipio = "Código do município não é compatível com base do IBGE",
+      sol_municipio = ibge
+    )
+}
 
 # assuntos genéricos ------------------------------------------------------
-
 # assuntos fora da SGT ----------------------------------------------------
-
 # contagem de assuntos ----------------------------------------------------
+# combinacoes raras classe-assunto ----------------------------------------
 
-# tamanho do processo -----------------------------------------------------
-
-
-# da_basic$assunto[[97081]]
-#
-#
-#
-#
-# sample(da_basic$assunto, 10)
-#
-# da_basic %>%
-#   count(proc_el)
-#
-# da_basic %>%
-#   filter(grau == "TRU") %>%
-#   count(sigla_tribunal)
-#
-# da_basic %>%
-#   filter(!is.na(valor_causa), valor_causa == "3e+06") %>%
-#   select(file, file_json)
-#
-#
-# file <- "../dados/brutos/justica_estadual/processos-tjap/processos-tjap_2.json"
-#
-# da <- jsonlite::read_json(
-#   file,
-#   simplifyDataFrame = TRUE,
-#   flatten = FALSE
-# )
-# da$dadosBasicos %>%
-#   filter(numero == "00008406219948030001") %>%
-#   with(valorCausa) %>%
-#   scales::number()
-#
-# aff <- ler_basic_one(file)
-# aff %>%
-#   filter(numero == "00008406219948030001")
-#   filter(valor_causa == "3e+06") %>%
-#   select(numero)
 
 
 
 # export ------------------------------------------------------------------
 
-da_incos <- da_basic_transform %>%
-  inc_numero_justica_tribunal() %>%
-  inc_classe() %>%
-  select(
-    rowid, justica, tribunal,
-    numero, classe_processual,
-    starts_with("inc_"),
-    starts_with("sol_")
-  ) %>%
-  filter(!is.na(inc_justica) | !is.na(inc_classe_sgt))
+list_incos <- ls()[str_detect(ls(), "^inc_")] %>%
+  purrr::map(~get(.x)(da_basic_transform))
 
-readr::write_rds(da_incos, "data-raw/p02_01_da_incos_basic.rds")
+da_inicial <- da_basic_transform %>%
+  select(rowid, justica, tribunal)
+da_incos <- list_incos %>%
+  reduce(left_join, by = "rowid", .init = da_inicial) %>%
+  filter_at(vars(starts_with("inc_")), any_vars(!is.na(.)))
 
+readr::write_rds(
+  da_incos,
+  "data-raw/p02_01_da_incos_basic.rds",
+  compress = "xz"
+)
 
+glimpse(da_incos)
