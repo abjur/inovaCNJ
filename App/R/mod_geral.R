@@ -27,12 +27,12 @@ mod_geral_ui <- function(id){
 #' geral Server Functions
 #'
 #' @noRd
-mod_geral_server <- function(id) {
+mod_geral_server <- function(id, app_data) {
   shiny::moduleServer(id, function(input, output, session){
 
 
     output$tabela <- reactable::renderReactable({
-      reactable::reactable(utils::head(inovaCNJ::da_incos))
+      reactable::reactable(utils::head(app_data()$incos))
     })
 
 

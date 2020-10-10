@@ -78,7 +78,8 @@ mod_incos_ui <- function(id){
 #' incos Server Functions
 #'
 #' @noRd
-mod_incos_server <- function(id){
+mod_incos_server <- function(id, app_data) {
+
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
@@ -89,7 +90,7 @@ mod_incos_server <- function(id){
 
     purrr::map(seq_along(nm), ~{
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
-        n <- inovaCNJ::da_incos %>%
+        n <- app_data()$incos %>%
           dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
           nrow()
         stringr::str_glue("{incos[[.x]]$nome} ({n})")
@@ -102,7 +103,7 @@ mod_incos_server <- function(id){
           paste0(Sys.Date(), "-inc_", nm[.x], ".xlsx")
         },
         content = function(file) {
-          inovaCNJ::da_incos %>%
+          app_data()$incos %>%
             dplyr::select(
               rowid, numero, justica, tribunal,
               dplyr::matches(paste("^(inc_|sol_|info_).*", nm[.x]))

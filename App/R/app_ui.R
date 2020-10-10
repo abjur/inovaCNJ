@@ -3,6 +3,9 @@
 #' @import shiny
 #' @noRd
 app_ui <- function() {
+
+  lista_tribunais <- unique(inovaCNJ::da_incos$tribunal)
+
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
@@ -10,7 +13,23 @@ app_ui <- function() {
     bs4Dash::dashboardPage(
 
       # ----
-      controlbar = bs4Dash::dashboardControlbar(),
+      controlbar = bs4Dash::dashboardControlbar(
+        skin = "light",
+        shinyWidgets::pickerInput(
+          "tribunal",
+          label = "Tribunais",
+          lista_tribunais,
+          lista_tribunais,
+          options = list(
+            "actions-box" = TRUE,
+            size = 10,
+            "selected-text-format" = "count > 3",
+            style = "btn-dark"
+          ),
+          multiple = TRUE
+        ),
+        shiny::actionButton("executar", "Executar!")
+      ),
       navbar = bs4Dash::dashboardHeader(
         rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
       ),

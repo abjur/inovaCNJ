@@ -22,7 +22,34 @@ app_server <- function( input, output, session ) {
   # print(dados)
 
   # autenticar_gsheets()
-  mod_geral_server("geral_ui_1")
-  mod_incos_server("incos_ui_1")
+
+
+  app_data <- shiny::reactive({
+
+    input$executar
+    shiny::isolate({
+
+      if (length(input$tribunal) == 0) {
+        tribunais <- unique(inovaCNJ::da_incos$tribunal)
+      } else {
+        tribunais <- input$tribunal
+      }
+
+      incos <- inovaCNJ::da_incos %>%
+        dplyr::filter(tribunal %in% tribunais)
+
+      list(
+        incos = incos
+      )
+
+    })
+
+
+
+  })
+
+
+  mod_geral_server("geral_ui_1", app_data)
+  mod_incos_server("incos_ui_1", app_data)
 
 }
