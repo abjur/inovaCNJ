@@ -1,0 +1,9 @@
+utils::globalVariables(c(
+  "classe_processual",
+  "inc_classe_sgt",
+  "inc_justica",
+  "justica",
+  "numero",
+  "rowid",
+  "tribunal"
+))
