@@ -78,7 +78,7 @@ golem_add_external_resources <- function(){
     favicon(),
     bundle_resources(
       path = app_sys('app/www'),
-      app_title = 'cnjInova'
+      app_title = 'inovaCNJ'
     ),
     shinyjs::useShinyjs()
     # Add here other external resources

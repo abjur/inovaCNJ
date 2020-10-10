@@ -42,7 +42,7 @@ mod_incos_server <- function(id){
 
     # justica
     output$incos_justica_lab <- shiny::renderText({
-      n <- cnjInova::da_incos %>%
+      n <- inovaCNJ::da_incos %>%
         dplyr::filter(!is.na(inc_justica)) %>%
         nrow()
       stringr::str_glue("Justiça/Tribunal ({n})")
@@ -52,7 +52,7 @@ mod_incos_server <- function(id){
         paste0(Sys.Date(), "-inc_justica.xlsx")
       },
       content = function(file) {
-        cnjInova::da_incos %>%
+        inovaCNJ::da_incos %>%
           dplyr::select(rowid, numero, justica, tribunal, inc_justica) %>%
           writexl::write_xlsx(file)
       }
@@ -60,7 +60,7 @@ mod_incos_server <- function(id){
 
     # classe
     output$incos_classe_lab <- shiny::renderText({
-      n <- cnjInova::da_incos %>%
+      n <- inovaCNJ::da_incos %>%
         dplyr::filter(!is.na(inc_classe_sgt)) %>%
         nrow()
       stringr::str_glue("Classe ({n})")
@@ -70,7 +70,7 @@ mod_incos_server <- function(id){
         paste0(Sys.Date(), "-inc_classe.xlsx")
       },
       content = function(file) {
-        cnjInova::da_incos %>%
+        inovaCNJ::da_incos %>%
           dplyr::filter(!is.na(inc_classe_sgt)) %>%
           dplyr::select(rowid, numero, justica, tribunal, classe_processual, inc_classe_sgt) %>%
           writexl::write_xlsx(file)

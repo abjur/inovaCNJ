@@ -33,7 +33,7 @@ mod_geral_server <- function(id) {
 
     output$tabela <- reactable::renderReactable({
 
-      reactable::reactable(cnjInova::da_incos)
+      reactable::reactable(inovaCNJ::da_incos)
 
     })
 
