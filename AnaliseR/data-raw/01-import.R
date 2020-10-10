@@ -80,6 +80,51 @@ da_basic <- fs::dir_ls("../dados/processados/basicos/") %>%
 
 readr::write_rds(da_basic, "../dados/processados/da_basic.rds", compress = "xz")
 
+da_basic_transform <- da_basic %>%
+  select(-assunto) %>%
+  mutate(valor_causa = as.numeric(valor_causa)) %>%
+  rowid_to_column() %>%
+  mutate(justica_tribunal = fs::path_file(fs::path_ext_remove(file))) %>%
+  separate(justica_tribunal, c("justica", "tribunal"), sep = "_") %>%
+  mutate(
+    tribunal = str_remove(tribunal, "-"),
+    tribunal = toupper(tribunal),
+    tribunal = str_replace(tribunal, "DF$", "DFT"),
+    tribunal = str_replace(tribunal, "(?<=TRT)([1-9])$", "0\\1")
+  )
 
-da_basicos
+readr::write_rds(da_basic_transform, "../dados/processados/da_basic_transform.rds", compress = "xz")
 
+## export para python
+# da_basic_transform %>%
+#   select(-assunto) %>%
+#   feather::write_feather("../dados/processados/da_basic_transform.feather")
+
+da_basic_assuntos <- da_basic %>%
+  rowid_to_column() %>%
+  select(rowid, assunto) %>%
+  unnest(assunto)
+
+da_basic_assuntos %>%
+  unchop(assuntoLocal)
+
+da_basic_assuntos %>%
+  feather::write_feather("../dados/processados/da_basic_assuntos.feather")
+
+
+
+# drafts ------------------------------------------------------------------
+
+file <- "../dados/brutos/justica_trabalho/processos-trt10/processos-trt10_2.json"
+json <- jsonlite::read_json(
+  file,
+  simplifyDataFrame = TRUE,
+  flatten = FALSE
+)
+as_tibble(json$dadosBasicos) %>%
+  sample_n(10) %>%
+  glimpse()
+
+
+as.character(json$dadosBasicos$dataAjuizamento[100])
+json$movimento[[100]]
