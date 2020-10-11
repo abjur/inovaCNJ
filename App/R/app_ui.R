@@ -48,6 +48,11 @@ app_ui <- function() {
             "Inconsistencias",
             tabName = "menu_incos",
             icon = "database"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Validação de dados",
+            tabName = "menu_validacao",
+            icon = "compress-arrows-alt"
           )
         )
       ),
@@ -65,7 +70,8 @@ app_ui <- function() {
             mod_incos_ui("incos_ui_1")
           ),
           bs4Dash::bs4TabItem(
-            tabName = "menu_upload"
+            tabName = "menu_validacao",
+            mod_validacao_ui("validacao_ui_1")
           )
         )
       ),
