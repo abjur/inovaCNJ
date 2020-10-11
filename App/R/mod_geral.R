@@ -39,18 +39,20 @@ mod_geral_ui <- function(id){
       )
     ),
 
-    bs4Dash::box(
-      width = 6,
-      title = "Comparação entre os tribunais da mesma justiça",
-      highcharter::highchartOutput(ns("grafico"), height = "600px") %>%
-        shinycssloaders::withSpinner()
-    ),
+    shiny::fluidRow(
+      bs4Dash::box(closable = FALSE,
+                   width = 6,
+                   title = "Comparação entre os tribunais da mesma justiça",
+                   highcharter::highchartOutput(ns("grafico"), height = "600px") %>%
+                     shinycssloaders::withSpinner()
+      ),
 
-    bs4Dash::box(
-      width = 6,
-      title = "Principais inconsistências",
-      reactable::reactableOutput(ns("tabela")) %>%
-        shinycssloaders::withSpinner()
+      bs4Dash::box(closable = FALSE,
+                   width = 6,
+                   title = "Principais inconsistências",
+                   reactable::reactableOutput(ns("tabela")) %>%
+                     shinycssloaders::withSpinner()
+      )
     )
   )
 }
@@ -93,7 +95,9 @@ mod_geral_server <- function(id, app_data) {
             group = "um",
             color = "tribunal_escolhido"
           )
-        )
+        ) %>%
+        highcharter::hc_yAxis(title = list(text = 'Índice de Qualidade')) %>%
+        highcharter::hc_xAxis(title = list(text = 'Tribunal'))
 
     })
 
@@ -103,7 +107,10 @@ mod_geral_server <- function(id, app_data) {
         dplyr::summarise(dplyr::across(.fns = ~sum(!is.na(.x)))) %>%
         tidyr::pivot_longer(dplyr::everything()) %>%
         dplyr::arrange(dplyr::desc(value)) %>%
-        reactable::reactable()
+        dplyr::mutate(name = stringr::str_replace(name,'inc_',''),
+                      name = stringr::str_to_title(name)) %>%
+        reactable::reactable(columns = list(name = reactable::colDef(name = 'Inconsistência'),
+                                            value = reactable::colDef(name = 'Quantidade')))
     })
 
     output$indice <- bs4Dash::renderbs4ValueBox({
