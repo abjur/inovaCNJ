@@ -23,11 +23,13 @@ create_theme_css <- function() {
 }
 
 status_para_cor <- function(status) {
-  switch (status,
-          info = "#0f7cbf",
-          secondary = "#495961",
-          primary = "#003366",
-          success = "#caab5d",
-          warning = "#ffcd37",
-          danger = "#BF616A")
+  switch (
+    status,
+    info = "#0f7cbf",
+    secondary = "#495961",
+    primary = "#003366",
+    success = "#5dca95",
+    warning = "#ffcd37",
+    danger = "#BF616A"
+  )
 }

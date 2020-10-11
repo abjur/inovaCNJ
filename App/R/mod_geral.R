@@ -14,16 +14,17 @@ mod_geral_ui <- function(id){
     shiny::fluidRow(
       col_3(
         shinycssloaders::withSpinner(
-          bs4Dash::bs4ValueBoxOutput(ns("indice"), width = 12),
+          bs4Dash::bs4ValueBoxOutput(ns("ranking"), width = 12),
           color = "#1E90FF"
         )
       ),
       col_3(
         shinycssloaders::withSpinner(
-          bs4Dash::bs4ValueBoxOutput(ns("ranking"), width = 12),
+          bs4Dash::bs4ValueBoxOutput(ns("indice"), width = 12),
           color = "#1E90FF"
         )
       ),
+
       col_3(
         shinycssloaders::withSpinner(
           bs4Dash::bs4ValueBoxOutput(ns("problemas"), width = 12),
@@ -41,7 +42,7 @@ mod_geral_ui <- function(id){
     bs4Dash::box(
       width = 6,
       title = "Comparação entre os tribunais da mesma justiça",
-      highcharter::highchartOutput(ns("grafico")) %>%
+      highcharter::highchartOutput(ns("grafico"), height = "600px") %>%
         shinycssloaders::withSpinner()
     ),
 
@@ -69,24 +70,31 @@ mod_geral_server <- function(id, app_data) {
     #' posição do tribunal
     #' quantidade de correções possíveis
     #' índice de inconsistência
-    #'
-    #'
-    #'
-    #' gráficos
-    #'
-    #' comparação de tribunais
-    #' tabela de inconsistências
-    #'
-
 
     output$grafico <- highcharter::renderHighchart({
 
-      justica_tribunal <- app_data()$incos$justica[1]
-      inovaCNJ::da_incos %>%
-        dplyr::filter(justica == justica_tribunal) %>%
-        dplyr::pull(tribunal) %>%
-        forcats::fct_infreq() %>%
-        highcharter::hchart(type = "bar")
+
+
+      da <- app_data()$totais_justica %>%
+        dplyr::mutate(
+          indice = round(indice ^ 4 * 100),
+          tribunal_escolhido = dplyr::case_when(
+            tribunal == app_data()$totais_tribunal$tribunal ~ tribunal,
+            TRUE ~ "Outro"
+          ),
+          um = "Índice",
+        )
+
+      da %>%
+        highcharter::hchart(
+          "bar", highcharter::hcaes(
+            y = "indice",
+            x = "tribunal",
+            group = "um",
+            color = "tribunal_escolhido"
+          )
+        )
+
     })
 
     output$tabela <- reactable::renderReactable({
@@ -99,50 +107,74 @@ mod_geral_server <- function(id, app_data) {
     })
 
     output$indice <- bs4Dash::renderbs4ValueBox({
-      val <- nrow(app_data()$incos)
-      text <- "texto"
+      val <- round(app_data()$totais_tribunal$indice ^ 4 * 100)
+
+      colour <- dplyr::case_when(
+        val < 50 ~ "danger",
+        val < 90 ~ "warning",
+        TRUE ~ "success"
+      )
+
+      text <- "Índice de qualidade dos dados. Varia de zero a cem."
       bs4Dash::bs4ValueBox(
         value = tags$p(val, style = "font-size: 2vmax; margin-bottom: 0;"),
         subtitle = tags$p(HTML(text)),
-        icon = "gauge",
-        status = "success",
+        icon = "chart-line",
+        status = colour,
         width = NULL
       )
     })
     output$ranking <- bs4Dash::renderbs4ValueBox({
-      val <- nrow(app_data()$incos)
-      text <- "texto"
+      val <- paste0(
+        app_data()$totais_tribunal$tribunal, " (",
+        app_data()$totais_tribunal$ranking, "/",
+        max(app_data()$totais_justica$ranking), ")"
+      )
+      raz <- app_data()$totais_tribunal$ranking / max(app_data()$totais_justica$ranking)
 
-      # calcular_ranking <- function(tribunal)
+      colour <- dplyr::case_when(
+        raz < 0.2 ~ "success",
+        raz < .8 ~ "warning",
+        TRUE ~ "danger"
+      )
+
+      text <- "Ranking comparando com os tribunais da mesma justiça."
 
       bs4Dash::bs4ValueBox(
         value = tags$p(val, style = "font-size: 2vmax; margin-bottom: 0;"),
         subtitle = tags$p(HTML(text)),
-        icon = "globe",
-        status = "success",
+        icon = "trophy",
+        status = colour,
         width = NULL
       )
 
     })
+
     output$problemas <- bs4Dash::renderbs4ValueBox({
-      val <- nrow(app_data()$incos)
-      text <- "texto"
+      val <- nrow(app_data()$incos) %>%
+        scales::number(big.mark = ".", decimal.mark = ",")
+      text <- "Quantidade de processos com alguma inconsistência."
       bs4Dash::bs4ValueBox(
         value = tags$p(val, style = "font-size: 2vmax; margin-bottom: 0;"),
         subtitle = tags$p(HTML(text)),
-        icon = "globe",
-        status = "success",
+        icon = "exclamation",
+        status = "danger",
         width = NULL
       )
     })
     output$correcoes <- bs4Dash::renderbs4ValueBox({
-      val <- nrow(app_data()$incos)
-      text <- "texto"
+      val <- app_data()$incos %>%
+        dplyr::summarise(dplyr::across(dplyr::starts_with("sol"), ~sum(!is.na(.x)))) %>%
+        tidyr::pivot_longer(dplyr::everything()) %>%
+        dplyr::summarise(value = sum(value)) %>%
+        dplyr::pull(value) %>%
+        scales::number(big.mark = ".", decimal.mark = ",")
+      text <- "Quantidade de correções possíveis."
       bs4Dash::bs4ValueBox(
         value = tags$p(val, style = "font-size: 2vmax; margin-bottom: 0;"),
         subtitle = tags$p(HTML(text)),
-        icon = "globe",
-        status = "success",
+        icon = "thermometer",
+        status = "primary",
         width = NULL
       )
     })

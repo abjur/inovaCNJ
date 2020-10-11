@@ -29,25 +29,30 @@ app_server <- function( input, output, session ) {
     # input$executar
     # shiny::isolate({
 
-      if (length(input$tribunal) == 0) {
-        tribunais <- unique(inovaCNJ::da_incos$tribunal)
-      } else {
-        tribunais <- input$tribunal
-      }
+    if (length(input$tribunal) == 0) {
+      tribunais <- unique(inovaCNJ::da_incos$tribunal)
+    } else {
+      tribunais <- input$tribunal
+    }
 
-      incos <- inovaCNJ::da_incos %>%
-        dplyr::filter(tribunal %in% tribunais)
+    aux_tribunal <- inovaCNJ::da_totais %>%
+      dplyr::filter(tribunal == input$tribunal)
 
-      list(
-        incos = incos
-      )
+    aux_justica <- inovaCNJ::da_totais %>%
+      dplyr::filter(justica == aux_tribunal$justica)
+
+    incos <- inovaCNJ::da_incos %>%
+      dplyr::filter(tribunal %in% tribunais)
+
+    list(
+      incos = incos,
+      totais_justica = aux_justica,
+      totais_tribunal = aux_tribunal
+    )
 
     # })
 
-
-
   })
-
 
   mod_geral_server("geral_ui_1", app_data)
   mod_incos_server("incos_ui_1", app_data)

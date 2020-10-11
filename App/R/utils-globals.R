@@ -3,5 +3,6 @@ utils::globalVariables(c(
   "numero",
   "id",
   "tribunal",
-  "value"
+  "value",
+  "indice"
 ))

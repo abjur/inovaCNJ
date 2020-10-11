@@ -32,7 +32,6 @@ Imports:
     shinycssloaders,
     shinyjs,
     httr,
-    jsonlite,
     dplyr,
     writexl,
     stringr,
@@ -40,7 +39,8 @@ Imports:
     shinyWidgets,
     highcharter,
     tidyr,
-    forcats
+    forcats,
+    scales
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
