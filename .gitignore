@@ -3,3 +3,5 @@ dados
 models
 .Rhistory
 .RData
+*/__pycache__
+.DS_Store
