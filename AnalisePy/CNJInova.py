@@ -1,5 +1,5 @@
 import json
-
+import random
 
 class Parser:
 
@@ -13,11 +13,14 @@ class Parser:
             processos = json.load(fp)
         return processos
 
-    def parse_movs(self):
+    def parse_movs(self, rows, n_sample=100):
         processos = self.parse_dataframe()
+        if not rows:
+            rows = random.sample(range(len(processos)), n_sample)
         for row, processo in enumerate(processos):
-            yield {
-                'file_json': self.fp,
-                'rowid': row+1,
-                'movimento': processo['movimento']
-            }
+            if row in rows:
+                yield {
+                    'file_json': self.fp,
+                    'rowid': row+1,
+                    'movimento': processo['movimento']
+                }

@@ -1,7 +1,7 @@
 # import standard libraries
 from joblib import Parallel, delayed
 from pathlib import Path
-import argparse, json, re, os
+import argparse, json, random, re, os
 
 # import third-party libraries
 import pandas as pd
@@ -38,14 +38,15 @@ def main():
     # load main data
     dados = pd.read_feather(args['source_path'])
     dados = dados.drop_duplicates('file_json')
-    paths = list(set(dados['file_json'].str[3:].to_list()))[:10]
+    paths = list(set(dados['file_json'].str[3:].to_list()))
+    paths = random.sample(paths, 1)
 
     # execute loops to read, process and join files
     kwargs = {'n_jobs': -2, 'verbose': 10}
     movs = Parallel(**kwargs)(delayed(parse_lawsuits)(p) for p in paths)
     movs = pd.concat(movs, ignore_index=True)
     movs = movs.astype(str)
-    movs.to_feather(PROCESSED / args['dest_path'])
+    movs.to_feather(Path(args['dest_path']))
 
 # add execution block
 if __name__ == '__main__':
