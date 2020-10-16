@@ -3,7 +3,7 @@ library(tidyverse)
 da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>% dplyr::distinct()
-assuntos_cnj <- readr::read_delim(file = 'data-raw/arquivos_base/sgt_assuntos.csv',
+sgt_assuntos <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
                                   delim = ';',col_types = readr::cols(cod_filhos = 'c')) %>%
   dplyr::transmute(codigo,dscr= stringr::str_squish(descricao))
 
