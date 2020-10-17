@@ -3,7 +3,7 @@ library(tidyverse)
 da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>% dplyr::distinct()
-sgt_assuntos <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
+sgt_assunto <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
                                   delim = ';',col_types = readr::cols(cod_filhos = 'c')) %>%
   dplyr::transmute(codigo,dscr= stringr::str_squish(descricao))
 
@@ -281,7 +281,7 @@ inc_municipio_fun <- function(da) {
 # Assunto -----------------------------------------------------------------
 
 
-# assuntos genéricos ------------------------------------------------------
+# assuntos genéricos, fora da sgt, sem assunto principal ------------------------------------------------------
 inc_assuntos_fun <- function(da_assunto,sgt_assunto){
 
   # Assuntos genéricos
@@ -291,44 +291,49 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
   ass <- da_assunto %>%
     dplyr::select(-file,-descricao) %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,principal),names_to = 'tipo_codigo',values_to = 'codigo') %>%
-    dplyr::filter(!is.na(codigo)) %>%
     dplyr::left_join(sgt_assunto,'codigo') %>%
     dplyr::transmute(file_json,
                      rowid,
                      dscr,
                      info_assunto = codigo,
-                     inc_nao_e_assunto_principal = ifelse(!principal, 'Nenhum assunto indicado como "principal"', ''),
+                     inc_nao_e_assunto_principal = ifelse((!principal | is.na(principal)), 'Nenhum assunto indicado como "principal"', ''),
                      inc_assunto_generico = ifelse(info_assunto %in% generico, 'Assunto genérico', ''),
-                     inc_assunto_nao_bate_com_tpu = ifelse(is.na(dscr), 'Código do assunto não bate com a TPU', ''),
-                     dscr = tidyr::replace_na(dscr,'(Vazio)')) %>%
+                     inc_assunto_nao_bate_com_tpu = ifelse(is.na(dscr) & !is.na(info_assunto), 'Código do assunto não bate com a TPU', ''),
+                     inc_assunto_vazio = ifelse(is.na(info_assunto), 'Assunto vazio', ''),
+                     dscr = dplyr::case_when(is.na(dscr) & is.na(info_assunto)~NA_character_,
+                                             is.na(dscr) & !is.na(info_assunto)~'(Vazio)',
+                                             TRUE ~dscr)) %>%
     dplyr::group_by(file_json,rowid) %>%
-    dplyr::summarise(info_assunto = paste0(info_assunto,collapse = ', '),
-                     info_assunto_descr = paste0(dscr,collapse = ', '),
-                     info_assunto_descr = stringr::str_remove(info_assunto_descr, ', $'),
-                     inc_nao_possui_assunto_principal = min(inc_nao_e_assunto_principal),
+    dplyr::summarise(info_assunto = paste0(na.exclude(info_assunto),collapse = ', '),
+                     info_assunto_descr = paste0(na.exclude(dscr),collapse = ', '),
+                     inc_nao_possui_assunto_principal = ifelse(info_assunto == '', '',min(inc_nao_e_assunto_principal)),
                      inc_assunto_generico = min(inc_assunto_generico),
-                     inc_assunto_nao_bate_com_tpu = max(inc_assunto_nao_bate_com_tpu))
+                     inc_assunto_nao_bate_com_tpu = max(inc_assunto_nao_bate_com_tpu),
+                     inc_assunto_vazio = min(inc_assunto_vazio)) %>%
+    dplyr::filter_at(dplyr::vars(dplyr::starts_with('inc')),dplyr::any_vars(. != '')) %>%
+    dplyr::mutate(dplyr::across(dplyr::starts_with('inc'),~ifelse(.x=='',NA_character_,.x)))
 
   return(ass)
 }
 
-# assuntos fora da SGT ----------------------------------------------------
-# contagem de assuntos ----------------------------------------------------
 # combinacoes raras classe-assunto ----------------------------------------
+tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assunto)
 
 
 
 
 # export ------------------------------------------------------------------
 
-list_incos <- ls()[str_detect(ls(), "^inc_")] %>%
+list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto')] %>%
   purrr::map(~get(.x)(da_basic_transform))
 
 da_inicial <- da_basic_transform %>%
   select(id, rowid, file_json, justica, tribunal)
+
 da_incos <- list_incos %>%
   reduce(left_join, by = "id", .init = da_inicial) %>%
-  filter_at(vars(starts_with("inc_")), any_vars(!is.na(.)))
+  filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
+  left_join(tab_assunto,by = c('file_json','rowid'))
 
 readr::write_rds(
   da_incos,

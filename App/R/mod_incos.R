@@ -1,6 +1,18 @@
 #' Contem a lista de inconsistencias mapeadas no app.
 incos_mapeadas <- function() {
   list(
+    "nao_possui_assunto_principal" = list(
+      nome = "Assunto i)",
+      desc = 'Não possui identificação de assunto "principal"'
+    ),
+    "assunto_nao_bate_com_tpu" = list(
+      nome = "Assunto ii)",
+      desc = "Código CNJ do assunto não bate com a TPU (Res. 46 CNJ)."
+    ),
+    "assunto_vazio" = list(
+      nome = "Assunto iii)",
+      desc = "Assunto vazio"
+    ),
     "classe" = list(
       nome = "Classe",
       desc = "Código CNJ da classe não bate com a TPU (Res. 46 CNJ)."
