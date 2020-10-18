@@ -287,8 +287,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
   # Assuntos genéricos
   generico <- c('9985','12734','899	','9633','12480','1156','864','11428','10739','6191',
                 '1146','287','11068','195','8826','1209','11049','14','12467','7724')
-
-  ass <- da_assunto %>%
+  ass <- assuntos %>%
     dplyr::select(-file,-descricao) %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,principal),names_to = 'tipo_codigo',values_to = 'codigo') %>%
     dplyr::left_join(sgt_assunto,'codigo') %>%
@@ -297,7 +296,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
                      dscr,
                      info_assunto = codigo,
                      inc_nao_e_assunto_principal = ifelse((!principal | is.na(principal)), 'Nenhum assunto indicado como "principal"', ''),
-                     inc_assunto_generico = ifelse(info_assunto %in% generico, 'Assunto genérico', ''),
+                     inc_assunto_generico = ifelse(info_assunto %in% generico | is.na(info_assunto), 'Assunto genérico', ''),
                      inc_assunto_nao_bate_com_tpu = ifelse(is.na(dscr) & !is.na(info_assunto), 'Código do assunto não bate com a TPU', ''),
                      inc_assunto_vazio = ifelse(is.na(info_assunto), 'Assunto vazio', ''),
                      dscr = dplyr::case_when(is.na(dscr) & is.na(info_assunto)~NA_character_,
@@ -307,7 +306,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
     dplyr::summarise(info_assunto = paste0(na.exclude(info_assunto),collapse = ', '),
                      info_assunto_descr = paste0(na.exclude(dscr),collapse = ', '),
                      inc_nao_possui_assunto_principal = ifelse(info_assunto == '', '',min(inc_nao_e_assunto_principal)),
-                     inc_assunto_generico = min(inc_assunto_generico),
+                     inc_assunto_generico = ifelse(info_assunto == '', '',min(inc_assunto_generico)),
                      inc_assunto_nao_bate_com_tpu = max(inc_assunto_nao_bate_com_tpu),
                      inc_assunto_vazio = min(inc_assunto_vazio)) %>%
     dplyr::filter_at(dplyr::vars(dplyr::starts_with('inc')),dplyr::any_vars(. != '')) %>%
@@ -317,9 +316,21 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
 }
 
 # combinacoes raras classe-assunto ----------------------------------------
+inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
+  da_assunto %>%
+    dplyr::select(-file,-descricao,-principal) %>%
+    dplyr::left_join(dplyr::select(da_basic,file_json,rowid,classe_processual),c('file_json','rowid')) %>%
+    tidyr::pivot_longer(cols = -c(file_json,rowid,classe_processual),names_to = 'tipo_codigo',values_to = 'codigo') %>%
+    dplyr::left_join(sgt_assunto,'codigo') %>%
+    dplyr::filter(!is.na(codigo)) %>%
+    dplyr::group_by(classe_processual,codigo) %>%
+    dplyr::mutate(n = dplyr::n()) %>% dplyr::ungroup() %>%
+    dplyr::mutate(inc_classe_assunto_raro = ifelse(n <= quantile(n,0.05),'Combinação rara de classe e assunto','')) %>%
+    dplyr::select(file_json,rowid,inc_classe_assunto_raro)
+}
+
 tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assunto)
-
-
+tab_classe_assunto = inc_classe_assunto_fun(da_assunto = assuntos,da_basic = da_basic_transform,sgt_assunto = sgt_assunto)
 
 
 # export ------------------------------------------------------------------
@@ -333,7 +344,8 @@ da_inicial <- da_basic_transform %>%
 da_incos <- list_incos %>%
   reduce(left_join, by = "id", .init = da_inicial) %>%
   filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
-  left_join(tab_assunto,by = c('file_json','rowid'))
+  left_join(tab_assunto,by = c('file_json','rowid')) %>%
+  left_join(tab_classe_assunto,by = c('file_json','rowid'))
 
 readr::write_rds(
   da_incos,
