@@ -1,7 +1,0 @@
-name: cnjInova
-remote_url: https://abjur.shinyapps.io/cnjInova
-auth0_config:
-  api_url: https://cnj-inova.us.auth0.com
-  credentials:
-    key: XfvHo3ULJe7E4Q7gGacilmLcI6ZCYe4F
-    secret: t0Po8QA_U7RMkrYaH5V1NgUtrj2_JfqaNz6--XMUroh-83N7VKOvJG0l6HDuWGRI

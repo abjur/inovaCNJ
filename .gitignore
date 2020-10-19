@@ -4,3 +4,4 @@ models
 .Rhistory
 .RData
 rsconnect
+_auth0.yml

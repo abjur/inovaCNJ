@@ -1,7 +1,7 @@
 # write credentials to use auth0 inside app
 yaml <- list(
   name = "cnjInova",
-  remote_url = "https://abjur.shinyapps.io/cnjInova",
+  remote_url = "https://abjur.shinyapps.io/inovaCNJ",
   auth0_config = list(
     api_url = "https://cnj-inova.us.auth0.com",
     credentials = list(
