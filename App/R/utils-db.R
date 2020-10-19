@@ -27,10 +27,8 @@ auth_admin <- function(session) {
 }
 
 deploy <- function() {
-  repo <- pegar_repo(projeto)
-  u <- "https://api.github.com/repos/abjur/inovaCNJ/dispatches"
   r <- httr::POST(
-    u,
+    "https://api.github.com/repos/abjur/inovaCNJ/dispatches",
     httr::accept("application/vnd.github.everest-preview+json"),
     httr::authenticate("jtrecenti", Sys.getenv("GITHUB_PAT")),
     encode = "json",

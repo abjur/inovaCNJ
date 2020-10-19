@@ -19,17 +19,20 @@ mod_verificacao_ui <- function(id){
       closable = FALSE,
       maximizable = FALSE,
 
-      reactable::reactableOutput(ns("tabela")),
+      shiny::fluidRow(col_12(
+        shiny::verbatimTextOutput(ns("result"))
+      )),
 
-      shiny::actionButton(
-        ns("atualizar"), "Atualizar",
-        icon = shiny::icon("sync")
+      shiny::fluidRow(col_12(
+        reactable::reactableOutput(ns("tabela")),
+      )),
+      shiny::fluidRow(
+        shiny::actionButton(
+          ns("atualizar"), "Atualizar",
+          icon = shiny::icon("sync")
+        )
       )
-
     )
-
-
-
   )
 }
 
@@ -53,6 +56,10 @@ mod_verificacao_server <- function(id){
       desconectar(con)
       reactable::reactable(dados)
 
+    })
+
+    output$result <- shiny::renderPrint({
+      str(session$userData$auth0_info)
     })
 
 

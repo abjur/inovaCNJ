@@ -210,7 +210,7 @@ mod_incos_server <- function(id, app_data) {
           idate <- as.numeric(Sys.time())
           da <- readxl::read_excel(path) %>%
             dplyr::mutate(
-              user = session$userData$auth0_info$name,
+              user = usuario,
               input_date = idate
             )
 
