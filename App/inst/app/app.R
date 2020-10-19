@@ -27,9 +27,9 @@ auth0_server_verify2 <- function (session, app, api, state) {
       envir = session$userData
     )
 
-    auth0_info_file <<- tempfile(fileext = ".rds")
-
-    saveRDS(httr::content(resp, "parsed"), auth0_info_file)
+    ## this is the hack. Had to do this
+    ## in order to manage bs4Dash redirect issue
+    saveRDS(httr::content(resp, "parsed"), "auth0_info_file.rds")
 
     assign(
       "auth0_info",
