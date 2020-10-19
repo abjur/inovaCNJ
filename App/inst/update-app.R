@@ -19,4 +19,4 @@ rsconnect::setAccountInfo(
   secret = Sys.getenv('SHINYAPPS_SECRET')
 )
 
-rsconnect::deployApp('App/inst/app')
+rsconnect::deployApp('App/inst/app', appName = "inovaCNJ")
