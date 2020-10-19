@@ -11,7 +11,9 @@ mod_teste_ui <- function(id){
   ns <- NS(id)
   tagList(
 
-    shiny::verbatimTextOutput(ns("teste"))
+    shiny::verbatimTextOutput(ns("teste")),
+
+    auth0::logoutButton(icon = icon("sign-out-alt"))
 
   )
 }

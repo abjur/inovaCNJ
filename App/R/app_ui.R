@@ -11,19 +11,14 @@ app_ui <- function() {
     bs4Dash::dashboardPage(
 
       # ----
-      navbar = bs4Dash::dashboardHeader(
-        rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
-      ),
+      navbar = bs4Dash::dashboardHeader(),
 
       # ----
       sidebar = bs4Dash::dashboardSidebar(
-        skin = "light",
-        title = "{cnjInova}",
         bs4Dash::bs4SidebarMenu(
           bs4Dash::bs4SidebarMenuItem(
             "Feedback",
-            tabName = "menu_teste",
-            icon = "comments"
+            tabName = "menu_teste"
           )
         )
       ),
