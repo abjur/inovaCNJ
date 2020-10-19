@@ -25,3 +25,16 @@ auth_admin <- function(session) {
   usuario <- ifelse(is.null(usuario), "local", usuario)
   usuario %in% usuarios_admin()
 }
+
+deploy <- function() {
+  repo <- pegar_repo(projeto)
+  u <- "https://api.github.com/repos/abjur/inovaCNJ/dispatches"
+  r <- httr::POST(
+    u,
+    httr::accept("application/vnd.github.everest-preview+json"),
+    httr::authenticate("jtrecenti", Sys.getenv("GITHUB_PAT")),
+    encode = "json",
+    body = list(event_type = "update")
+  )
+  invisible()
+}

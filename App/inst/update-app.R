@@ -3,6 +3,8 @@ cat(stringr::str_glue(
   "\nBD_PWD={Sys.getenv('BD_PWD')}",
   "\nAUTH0_KEY={Sys.getenv('AUTH0_KEY')}",
   "\nAUTH0_SECRET={Sys.getenv('AUTH0_SECRET')}",
+  "\nGITHUB_PAT={Sys.getenv('GITHUB_PAT')}",
+  "\n"
 ), file = "App/inst/app/.Renviron")
 
 # deploy app
