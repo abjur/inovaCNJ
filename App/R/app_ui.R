@@ -59,6 +59,11 @@ app_ui <- function() {
             "Verificação de dados",
             tabName = "menu_verificacao",
             icon = "compress-arrows-alt"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Feedback",
+            tabName = "menu_feedback",
+            icon = "comments"
           )
         )
       ),
@@ -82,6 +87,10 @@ app_ui <- function() {
           bs4Dash::bs4TabItem(
             tabName = "menu_verificacao",
             mod_verificacao_ui("verificacao_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_feedback",
+            mod_feedback_ui("feedback_ui_1")
           )
         )
       ),

@@ -36,6 +36,7 @@ app_server <- function( input, output, session ) {
   mod_geral_server("geral_ui_1", app_data)
   mod_incos_server("incos_ui_1", app_data)
   mod_verificacao_server("verificacao_ui_1")
+  mod_feedback_server("feedback_ui_1")
   # mod_validacao_server("validacao_ui_1")
 
 }

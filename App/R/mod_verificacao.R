@@ -67,9 +67,3 @@ mod_verificacao_server <- function(id){
 
   })
 }
-
-## To be copied in the UI
-# mod_verificacao_ui("verificacao_ui_1")
-
-## To be copied in the server
-# mod_verificacao_server("verificacao_ui_1")
