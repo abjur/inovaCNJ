@@ -8,26 +8,30 @@ app_ui <- function() {
     # Leave this function for adding external resources
     golem_add_external_resources(),
 
-    shinydashboard::dashboardPage(
+    bs4Dash::dashboardPage(
 
       # ----
-      header = shinydashboard::dashboardHeader(),
+      navbar = bs4Dash::dashboardHeader(
+        rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
+      ),
 
       # ----
-      sidebar = shinydashboard::dashboardSidebar(
-        shinydashboard::sidebarMenu(
-          shinydashboard::menuItem(
+      sidebar = bs4Dash::dashboardSidebar(
+        skin = "light",
+        title = "{cnjInova}",
+        bs4Dash::bs4SidebarMenu(
+          bs4Dash::bs4SidebarMenuItem(
             "Feedback",
             tabName = "menu_teste",
-            icon = shiny::icon("comments")
+            icon = "comments"
           )
         )
       ),
 
       # ----
-      body = shinydashboard::dashboardBody(
-        shinydashboard::tabItems(
-          shinydashboard::tabItem(
+      body = bs4Dash::dashboardBody(
+        bs4Dash::bs4TabItems(
+          bs4Dash::bs4TabItem(
             tabName = "menu_teste",
             mod_teste_ui("teste_ui_1")
           )
