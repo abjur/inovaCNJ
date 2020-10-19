@@ -7,7 +7,7 @@
 app_server <- function( input, output, session ) {
 
   shiny::observe({
-    print(session$userData$auth0_info)
+    print(as.list(session$userData))
   })
 
   mod_teste_server("teste_ui_1")
