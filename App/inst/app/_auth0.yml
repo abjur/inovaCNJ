@@ -1,5 +1,5 @@
 name: myApp
-remote_url: 'https://abjur.shinyapps.io/inovaCNJ'
+remote_url: 'https://abjur.shinyapps.io/inovaCNJTest'
 auth0_config:
   api_url: "https://cnj-inova.us.auth0.com"
   credentials:
