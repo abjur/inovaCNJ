@@ -19,10 +19,6 @@ mod_verificacao_ui <- function(id){
       maximizable = FALSE,
 
       shiny::fluidRow(col_12(
-        shiny::verbatimTextOutput(ns("result"))
-      )),
-
-      shiny::fluidRow(col_12(
         reactable::reactableOutput(ns("tabela")) %>%
           shinycssloaders::withSpinner(),
       )),
@@ -128,12 +124,6 @@ mod_verificacao_server <- function(id){
         )
 
     })
-
-    output$result <- shiny::renderPrint({
-      str(session$userData$auth0_info)
-    })
-
-
 
 
   })

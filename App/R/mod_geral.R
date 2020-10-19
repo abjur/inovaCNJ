@@ -114,6 +114,9 @@ mod_geral_server <- function(id, app_data) {
           name = stringr::str_to_title(name),
           name = stringr::str_replace_all(name, "_", " ")
         ) %>%
+        dplyr::filter(
+          value > 0
+        ) %>%
         reactable::reactable(
           defaultPageSize = 20,
           columns = list(

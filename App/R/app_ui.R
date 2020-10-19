@@ -28,8 +28,7 @@ app_ui <- function() {
             style = "btn-dark"
           ),
           multiple = FALSE
-        )#,
-        # shiny::actionButton("executar", "Executar!")
+        )
       ),
       navbar = bs4Dash::dashboardHeader(
         rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
@@ -40,31 +39,31 @@ app_ui <- function() {
         skin = "light",
         title = "{cnjInova}",
         bs4Dash::bs4SidebarMenu(
-          # bs4Dash::bs4SidebarMenuItem(
-          #   "Geral",
-          #   tabName = "menu_geral",
-          #   icon = "bullseye"
-          # ),
-          # bs4Dash::bs4SidebarMenuItem(
-          #   "Inconsistencias",
-          #   tabName = "menu_incos",
-          #   icon = "database"
-          # ),
-          # bs4Dash::bs4SidebarMenuItem(
-          #   "Verificação de dados",
-          #   tabName = "menu_verificacao",
-          #   icon = "compress-arrows-alt"
-          # ),
-          # bs4Dash::bs4SidebarMenuItem(
-          #   "Feedback",
-          #   tabName = "menu_feedback",
-          #   icon = "comments"
-          # ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Geral",
+            tabName = "menu_geral",
+            icon = "bullseye"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Inconsistencias",
+            tabName = "menu_incos",
+            icon = "database"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Verificação de dados",
+            tabName = "menu_verificacao",
+            icon = "compress-arrows-alt"
+          ),
           bs4Dash::bs4SidebarMenuItem(
             "Feedback",
-            tabName = "menu_teste",
+            tabName = "menu_feedback",
             icon = "comments"
-          )
+          )#,
+          # bs4Dash::bs4SidebarMenuItem(
+          #   "Feedback",
+          #   tabName = "menu_teste",
+          #   icon = "comments"
+          # )
         )
       ),
 
@@ -72,26 +71,26 @@ app_ui <- function() {
       body = bs4Dash::dashboardBody(
         fresh::use_theme(create_theme_css()),
         bs4Dash::bs4TabItems(
-          # bs4Dash::bs4TabItem(
-          #   tabName = "menu_geral",
-          #   mod_geral_ui("geral_ui_1")
-          # ),
-          # bs4Dash::bs4TabItem(
-          #   tabName = "menu_incos",
-          #   mod_incos_ui("incos_ui_1")
-          # ),
-          # bs4Dash::bs4TabItem(
-          #   tabName = "menu_verificacao",
-          #   mod_verificacao_ui("verificacao_ui_1")
-          # ),
-          # bs4Dash::bs4TabItem(
-          #   tabName = "menu_feedback",
-          #   mod_feedback_ui("feedback_ui_1")
-          # ),
           bs4Dash::bs4TabItem(
-            tabName = "menu_teste",
-            mod_teste_ui("teste_ui_1")
-          )
+            tabName = "menu_geral",
+            mod_geral_ui("geral_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_incos",
+            mod_incos_ui("incos_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_verificacao",
+            mod_verificacao_ui("verificacao_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_feedback",
+            mod_feedback_ui("feedback_ui_1")
+          )#,
+          # bs4Dash::bs4TabItem(
+          #   tabName = "menu_teste",
+          #   mod_teste_ui("teste_ui_1")
+          # )
         )
       ),
 
