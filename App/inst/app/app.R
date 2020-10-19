@@ -34,6 +34,12 @@ auth0_server_verify2 <- function (session, app, api, state) {
     assign(
       "auth0_info",
       httr::content(resp, "parsed"),
+      envir = .GlobalEnv
+    )
+
+    assign(
+      "auth0_info",
+      httr::content(resp, "parsed"),
       envir = session$userData
     )
 
