@@ -12,8 +12,8 @@ Acessar em navegador Chrome ou Firefox.
 
 Link para acesso à plataforma: https://abjur.shinyapps.io/inovaCNJ
 
-Login: 
-Senha: 
+Login: <usuario@inovacnj.com>
+Senha: CNJ!2020
 
 ## Aba 1: Menu principal
 
