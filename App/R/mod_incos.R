@@ -85,11 +85,26 @@ mod_incos_ui <- function(id){
 
       shiny::conditionalPanel(
         stringr::str_glue("document.getElementById('{ns(.y)}_box').classList.contains('maximized-card')"),
-        reactable::reactableOutput(ns(paste0(.y, "_tab"))),
+        shiny::fluidRow(
+          shiny::column(
+            width = 12,
+            reactable::reactableOutput(ns(paste0(.y, "_tab")))
+          )
+        ),
+        shiny::fluidRow(
+          shiny::fileInput(
+            ns(paste0(.y, "_up")), "Upload de base arrumada",
+            accept = ".xlsx"
+          )
+        ),
+        shiny::fluidRow(
+          shiny::actionButton(ns(paste0(.y, "_btn")), "Submeter")
+        ),
         ns = ns
       ),
-
-      shiny::downloadButton(ns(paste0(.y, "_dld")))
+      shiny::fluidRow(
+        shiny::downloadButton(ns(paste0(.y, "_dld")))
+      )
     )
   })
 
@@ -118,6 +133,10 @@ mod_incos_server <- function(id, app_data) {
     nm <- names(incos)
 
     purrr::map(seq_along(nm), ~{
+
+
+
+
 
       # label
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
@@ -156,6 +175,66 @@ mod_incos_server <- function(id, app_data) {
 
       })
 
+
+      # upload
+
+      shiny::observe({
+        path <- input[[paste0(nm[.x], "_up")]][["datapath"]]
+        if (!is.null(path)) da <- readxl::read_excel(path)
+      })
+
+      shiny::observeEvent(input[[paste0(nm[.x], "_btn")]], {
+
+        path <- input[[paste0(nm[.x], "_up")]][["datapath"]]
+
+
+        if (!is.null(path)) {
+
+          da <- readxl::read_excel(path)
+
+          da_incos <- app_data()$incos %>%
+            dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
+            dplyr::select(
+              id, justica, tribunal,
+              dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
+            )
+
+          if (all(names(da_incos) %in% names(da)) && nrow(da_incos) == nrow(da)) {
+            shinyalert::shinyalert(
+              "Arquivo submetido com sucesso!",
+              stringr::str_glue(
+                "O arquivo com correções foi submetido com sucesso",
+                "e será analisado pela equipe do CNJ."
+              ),
+              type = "success",
+              closeOnClickOutside = TRUE
+            )
+          } else {
+            shinyalert::shinyalert(
+              "Insira um arquivo válido",
+              stringr::str_glue(
+                "Um arquivo válido contém as mesmas linhas e colunas da base",
+                "disponível para Download e, eventualmente, uma coluna",
+                "adicional contendo observações e justificativas."
+              ),
+              type = "error",
+              closeOnClickOutside = TRUE
+            )
+          }
+        } else {
+          shinyalert::shinyalert(
+            "Insira um arquivo válido",
+            stringr::str_glue(
+              "Um arquivo válido contém as mesmas linhas e colunas da base",
+              "disponível para Download e, eventualmente, uma coluna",
+              "adicional contendo observações e justificativas."
+            ),
+            type = "error",
+            closeOnClickOutside = TRUE
+          )
+        }
+
+      })
 
     })
 

@@ -4,5 +4,6 @@ utils::globalVariables(c(
   "id",
   "tribunal",
   "value",
-  "indice"
+  "indice",
+  "name"
 ))

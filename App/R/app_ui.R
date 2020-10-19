@@ -9,6 +9,7 @@ app_ui <- function() {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
+    shinyalert::useShinyalert(),
 
     bs4Dash::dashboardPage(
 
