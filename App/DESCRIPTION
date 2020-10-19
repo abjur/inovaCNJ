@@ -44,7 +44,8 @@ Imports:
     readxl,
     shinyalert,
     RPostgres,
-    tibble
+    tibble,
+    dbplyr
 Remotes: 
   ThinkR-open/golem,
   jtrecenti/bs4Dash
