@@ -27,7 +27,7 @@ mod_teste_server <- function(id) {
 
     output$teste <- shiny::renderPrint({
 
-      utils::str(as.list(session$userData))
+      utils::str(readRDS(auth0_info_file))
 
     })
 
