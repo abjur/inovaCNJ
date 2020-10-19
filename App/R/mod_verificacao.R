@@ -10,6 +10,21 @@ mod_verificacao_ui <- function(id){
   ns <- shiny::NS(id)
   shiny::tagList(
 
+
+    bs4Dash::box(
+      width = 12,
+      inputId = ns("caixa"),
+      title = "Inconsistências",
+      collapsible = FALSE,
+      closable = FALSE,
+      maximizable = FALSE,
+
+      reactable::reactableOutput(ns("tabela"))
+
+    )
+
+
+
   )
 }
 
@@ -20,7 +35,19 @@ mod_verificacao_server <- function(id){
   shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
+    output$tabela <- reactable::renderReactable({
 
+      shiny::validate(shiny::need(
+        auth_admin(session),
+        message = "Usuário precisa ser administrador para acessar essa parte da aplicação."
+      ))
+
+      con <- conectar()
+      dados <- RPostgres::dbReadTable(con, "sugestoes")
+      desconectar(con)
+      reactable::reactable(dados)
+
+    })
 
 
 

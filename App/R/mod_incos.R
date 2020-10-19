@@ -140,6 +140,9 @@ mod_incos_server <- function(id, app_data) {
     incos <- incos_mapeadas()
     nm <- names(incos)
 
+    usuario <- session$userData$auth0_info$name
+    usuario <- ifelse(is.null(usuario), "local", usuario)
+
     purrr::map(seq_along(nm), ~{
 
       # label
@@ -222,28 +225,25 @@ mod_incos_server <- function(id, app_data) {
 
           if (all(names(da_incos) %in% names(da)) && nrow(da_incos) == nrow(da)) {
 
+
+
             try({
 
-              con <- RPostgres::dbConnect(
-                RPostgres::Postgres(),
-                dbname = "inovaCNJ",
-                host = Sys.getenv("BD_IP"),
-                port = 5432,
-                user = "admin",
-                password = Sys.getenv("BD_PWD")
-              )
+              con <- conectar()
 
               RPostgres::dbWriteTable(con, nm[.x], da, append = TRUE)
 
               da_sugestao <- tibble::tibble(
-                user = session$userData$auth0_info$name,
+                user = usuario,
                 input_date = idate,
                 inconsistencia = nm[.x]
               )
 
+              # browser()
+
               RPostgres::dbWriteTable(con, "sugestoes", da_sugestao, append = TRUE)
 
-              RPostgres::dbDisconnect(con)
+              desconectar(con)
 
               shinyalert::shinyalert(
                 "Arquivo submetido com sucesso!",
