@@ -2,7 +2,7 @@
 #'
 #' @import shiny
 #' @noRd
-app_ui <- function() {
+app_ui <- function(request) {
 
   lista_tribunais <- unique(inovaCNJ::da_incos$tribunal)
 
