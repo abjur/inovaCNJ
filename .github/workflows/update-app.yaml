@@ -1,0 +1,43 @@
+# For help debugging build failures open an issue on the RStudio community with the 'github-actions' tag.
+# https://community.rstudio.com/new-topic?category=Package%20development&tags=github-actions
+on:
+  push:
+    branches:
+      - main
+      - master
+
+name: deploy
+jobs:
+  render:
+    name: update-shinyapps-io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: "4.0.2"
+      - name: Install remotes, and the updated package
+        env:
+          GITHUB_PAT: ${{ secrets.PAT }}
+        run: |
+          install.packages(c("remotes", "rsconnect"), repos = "https://packagemanager.rstudio.com/all/__linux__/bionic/latest")
+          remotes::install_github("abjur/inovaCNJ", subdir = "App", repos = "https://packagemanager.rstudio.com/all/__linux__/bionic/latest")
+        shell: Rscript {0}
+      - name: Execute Script
+        env:
+          GITHUB_PAT: ${{ secrets.PAT }}
+          SHINYAPPS_TOKEN: ${{ secrets.SAT }}
+          SHINYAPPS_SECRET: ${{ secrets.SAS }}
+          AUTH0_KEY: ${{ secrets.A0K }}
+          AUTH0_SECRET: ${{ secrets.A0S }}
+        run: |
+          Rscript "inst/update-app.R"
+      - name: Commit results
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add -A
+          git commit -m 'Update dcf' || echo "Update dcf"
+          git push origin || echo "Update dcf"

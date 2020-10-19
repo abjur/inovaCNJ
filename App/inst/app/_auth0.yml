@@ -1,7 +1,7 @@
-aname: obsDash
-remote_url: 'https://abjur.shinyapps.io/cnjInova'
+name: cnjInova
+remote_url: https://abjur.shinyapps.io/cnjInova
 auth0_config:
-  api_url: "https://abj-dash.us.auth0.com"
+  api_url: https://cnj-inova.us.auth0.com
   credentials:
-    key:
-    secret:
+    key: ''
+    secret: ''
