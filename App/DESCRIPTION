@@ -26,25 +26,8 @@ Imports:
     shiny (>= 1.5.0),
     magrittr,
     bs4Dash,
-    fresh,
     auth0,
-    shinyjs,
-    reactable,
-    shinycssloaders,
-    httr,
-    dplyr,
-    writexl,
-    stringr,
-    purrr,
-    shinyWidgets,
-    highcharter,
-    tidyr,
-    forcats,
-    scales,
-    readxl,
-    shinyalert,
-    RPostgres,
-    tibble
+    shinyjs
 Remotes: ThinkR-open/golem
 Encoding: UTF-8
 LazyData: true
