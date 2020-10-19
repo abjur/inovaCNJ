@@ -1,2 +1,3 @@
 ^App\.Rproj$
 ^\.Rproj\.user$
+^data-raw$
