@@ -30,6 +30,8 @@ Já a pessoa pesquisadora do CNJ, além das atividades supracitadas, pode visual
 
 As tabelas de sugestões podem ser internamente utilizadas pelo CNJ para produzir a base de dados arrumada dos processos. Dessa forma, todo o sistema judiciário pode contribuir com arrumações dos dados, para que o DataJud se torne cada vez mais completa e correta.
 
+O aplicativo foi construído de forma completamente open source, usando a linguagem de programação R e o pacote `{shiny}`. A ferramenta já é massivamente utilizada pelo Departamento de Pesquisas Judiciárias do CNJ (DPJ-CNJ), o que torna o aprendizado e transferência de conhecimento eficientes.
+
 # Informações para avaliação da solução
 
 Acessar em navegador Chrome ou Firefox.
