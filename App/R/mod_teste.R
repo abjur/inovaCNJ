@@ -11,7 +11,8 @@ mod_teste_ui <- function(id){
   ns <- NS(id)
   tagList(
 
-    shiny::verbatimTextOutput(ns("teste"))
+    shiny::verbatimTextOutput(ns("teste")),
+    auth0::logoutButton(icon = icon("sign-out-alt"))
 
   )
 }
@@ -19,8 +20,8 @@ mod_teste_ui <- function(id){
 #' teste Server Functions
 #'
 #' @noRd
-mod_teste_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_teste_server <- function(id) {
+  shiny::moduleServer( id, function(input, output, session){
     ns <- session$ns
 
     output$teste <- shiny::renderPrint({

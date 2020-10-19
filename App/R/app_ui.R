@@ -8,44 +8,30 @@ app_ui <- function() {
     # Leave this function for adding external resources
     golem_add_external_resources(),
 
-    bs4Dash::dashboardPage(
+    shinydashboard::dashboardPage(
 
       # ----
-      controlbar = bs4Dash::dashboardControlbar(),
-      navbar = bs4Dash::dashboardHeader(
-        rightUi = auth0::logoutButton(icon = icon("sign-out-alt"))
-      ),
+      header = shinydashboard::dashboardHeader(),
 
       # ----
-      sidebar = bs4Dash::dashboardSidebar(
-        skin = "light",
-        title = "{cnjInova}",
-        bs4Dash::bs4SidebarMenu(
-          bs4Dash::bs4SidebarMenuItem(
+      sidebar = shinydashboard::dashboardSidebar(
+        shinydashboard::sidebarMenu(
+          shinydashboard::menuItem(
             "Feedback",
             tabName = "menu_teste",
-            icon = "comments"
+            icon = shiny::icon("comments")
           )
         )
       ),
 
       # ----
-      body = bs4Dash::dashboardBody(
-        bs4Dash::bs4TabItems(
-          bs4Dash::bs4TabItem(
+      body = shinydashboard::dashboardBody(
+        shinydashboard::tabItems(
+          shinydashboard::tabItem(
             tabName = "menu_teste",
             mod_teste_ui("teste_ui_1")
           )
         )
-      ),
-
-      # ----
-      footer = bs4Dash::dashboardFooter(
-        copyrights = shiny::a(
-          href = "https://abj.org.br",
-          target = "_blank", "ABJ"
-        ),
-        right_text = "2020 | desenvolvido com <3 pela ABJ"
       )
     )
   )
