@@ -4,28 +4,32 @@
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @noRd 
+#' @noRd
 #'
-#' @importFrom shiny NS tagList 
 mod_verificacao_ui <- function(id){
-  ns <- NS(id)
-  tagList(
- 
+  ns <- shiny::NS(id)
+  shiny::tagList(
+
   )
 }
-    
+
 #' verificacao Server Functions
 #'
-#' @noRd 
+#' @noRd
 mod_verificacao_server <- function(id){
-  moduleServer( id, function(input, output, session){
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
- 
+
+
+
+
+
+
   })
 }
-    
+
 ## To be copied in the UI
 # mod_verificacao_ui("verificacao_ui_1")
-    
+
 ## To be copied in the server
 # mod_verificacao_server("verificacao_ui_1")
