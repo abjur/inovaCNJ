@@ -33,7 +33,7 @@ jobs:
           AUTH0_KEY: ${{ secrets.A0K }}
           AUTH0_SECRET: ${{ secrets.A0S }}
         run: |
-          Rscript "inst/update-app.R"
+          Rscript "App/inst/update-app.R"
       - name: Commit results
         run: |
           git config --local user.email "actions@github.com"
