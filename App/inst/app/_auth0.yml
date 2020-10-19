@@ -1,0 +1,7 @@
+name: myApp
+remote_url: 'https://abjur.shinyapps.io/inovaCNJ'
+auth0_config:
+  api_url: "https://cnj-inova.us.auth0.com"
+  credentials:
+    key: !expr Sys.getenv("AUTH0_KEY")
+    secret: !expr Sys.getenv("AUTH0_SECRET")

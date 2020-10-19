@@ -19,7 +19,12 @@ mod_verificacao_ui <- function(id){
       closable = FALSE,
       maximizable = FALSE,
 
-      reactable::reactableOutput(ns("tabela"))
+      reactable::reactableOutput(ns("tabela")),
+
+      shiny::actionButton(
+        ns("atualizar"), "Atualizar",
+        icon = shiny::icon("sync")
+      )
 
     )
 
@@ -42,6 +47,7 @@ mod_verificacao_server <- function(id){
         message = "Usuário precisa ser administrador para acessar essa parte da aplicação."
       ))
 
+      input$atualizar
       con <- conectar()
       dados <- RPostgres::dbReadTable(con, "sugestoes")
       desconectar(con)
