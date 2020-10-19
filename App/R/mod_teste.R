@@ -27,7 +27,7 @@ mod_teste_server <- function(id) {
 
     output$teste <- shiny::renderPrint({
 
-      utils::str(auth0_info)
+      utils::str(session$userData$auth0_info)
 
     })
 
