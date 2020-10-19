@@ -5,3 +5,4 @@ models
 .RData
 rsconnect
 _auth0.yml
+.Renviron

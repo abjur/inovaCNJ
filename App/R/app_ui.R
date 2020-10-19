@@ -50,9 +50,14 @@ app_ui <- function() {
             tabName = "menu_incos",
             icon = "database"
           ),
+          # bs4Dash::bs4SidebarMenuItem(
+          #   "Validação de dados",
+          #   tabName = "menu_validacao",
+          #   icon = "compress-arrows-alt"
+          # ),
           bs4Dash::bs4SidebarMenuItem(
-            "Validação de dados",
-            tabName = "menu_validacao",
+            "Verificação de dados",
+            tabName = "menu_verificacao",
             icon = "compress-arrows-alt"
           )
         )
@@ -70,9 +75,13 @@ app_ui <- function() {
             tabName = "menu_incos",
             mod_incos_ui("incos_ui_1")
           ),
+          # bs4Dash::bs4TabItem(
+          #   tabName = "menu_validacao",
+          #   mod_validacao_ui("validacao_ui_1")
+          # ),
           bs4Dash::bs4TabItem(
-            tabName = "menu_validacao",
-            mod_validacao_ui("validacao_ui_1")
+            tabName = "menu_verificacao",
+            mod_verificacao_ui("verificacao_ui_1")
           )
         )
       ),

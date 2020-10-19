@@ -85,21 +85,29 @@ mod_incos_ui <- function(id){
 
       shiny::conditionalPanel(
         stringr::str_glue("document.getElementById('{ns(.y)}_box').classList.contains('maximized-card')"),
-        shiny::fluidRow(
-          shiny::column(
-            width = 12,
-            reactable::reactableOutput(ns(paste0(.y, "_tab")))
+        shiny::fluidRow(shiny::column(width = 12,
+          shiny::fluidRow(
+            shiny::column(
+              width = 12,
+              reactable::reactableOutput(ns(paste0(.y, "_tab")))
+            )
+          ),
+          shiny::fluidRow(
+            shiny::fileInput(
+              ns(paste0(.y, "_up")), "Upload de base arrumada",
+              accept = ".xlsx"
+            )
+          ),
+          shiny::fluidRow(
+            shiny::column(
+              width = 12,
+              reactable::reactableOutput(ns(paste0(.y, "_tabview")))
+            )
+          ),
+          shiny::fluidRow(
+            shiny::actionButton(ns(paste0(.y, "_btn")), "Submeter")
           )
-        ),
-        shiny::fluidRow(
-          shiny::fileInput(
-            ns(paste0(.y, "_up")), "Upload de base arrumada",
-            accept = ".xlsx"
-          )
-        ),
-        shiny::fluidRow(
-          shiny::actionButton(ns(paste0(.y, "_btn")), "Submeter")
-        ),
+        )),
         ns = ns
       ),
       shiny::fluidRow(
@@ -134,10 +142,6 @@ mod_incos_server <- function(id, app_data) {
 
     purrr::map(seq_along(nm), ~{
 
-
-
-
-
       # label
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
         n <- app_data()$incos %>%
@@ -168,13 +172,21 @@ mod_incos_server <- function(id, app_data) {
         app_data()$incos %>%
           dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
           dplyr::select(
-            id, justica, tribunal,
+            id, numero, justica, tribunal,
             dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
           ) %>%
-          reactable::reactable()
+          reactable::reactable(compact = TRUE, defaultPageSize = 8)
 
       })
 
+      output[[paste0(nm[.x], "_tabview")]] <- reactable::renderReactable({
+
+        path <- input[[paste0(nm[.x], "_up")]][["datapath"]]
+        if (!is.null(path)) {
+          da <- readxl::read_excel(path)
+          reactable::reactable(da, compact = TRUE, defaultPageSize = 8)
+        }
+      })
 
       # upload
 
@@ -190,25 +202,58 @@ mod_incos_server <- function(id, app_data) {
 
         if (!is.null(path)) {
 
-          da <- readxl::read_excel(path)
+          idate <- as.numeric(Sys.time())
+          da <- readxl::read_excel(path) %>%
+            dplyr::mutate(
+              user = session$userData$auth0_info$name,
+              input_date = idate
+            )
 
           da_incos <- app_data()$incos %>%
             dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
-              id, justica, tribunal,
+              id, numero, justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             )
 
           if (all(names(da_incos) %in% names(da)) && nrow(da_incos) == nrow(da)) {
-            shinyalert::shinyalert(
-              "Arquivo submetido com sucesso!",
-              stringr::str_glue(
-                "O arquivo com correções foi submetido com sucesso",
-                "e será analisado pela equipe do CNJ."
-              ),
-              type = "success",
-              closeOnClickOutside = TRUE
-            )
+
+            try({
+
+              con <- RPostgres::dbConnect(
+                RPostgres::Postgres(),
+                dbname = "inovaCNJ",
+                host = Sys.getenv("BD_IP"),
+                port = 5432,
+                user = "admin",
+                password = Sys.getenv("BD_PWD")
+              )
+
+              RPostgres::dbWriteTable(con, nm[.x], da, append = TRUE)
+
+              da_sugestao <- tibble::tibble(
+                user = session$userData$auth0_info$name,
+                input_date = idate,
+                inconsistencia = nm[.x]
+              )
+
+              RPostgres::dbWriteTable(con, "sugestoes", da_sugestao, append = TRUE)
+
+              RPostgres::dbDisconnect(con)
+
+              shinyalert::shinyalert(
+                "Arquivo submetido com sucesso!",
+                stringr::str_glue(
+                  "O arquivo com correções foi submetido com sucesso",
+                  " e será analisado pela equipe do CNJ."
+                ),
+                type = "success",
+                closeOnClickOutside = TRUE
+              )
+
+            })
+
+
           } else {
             shinyalert::shinyalert(
               "Insira um arquivo válido",

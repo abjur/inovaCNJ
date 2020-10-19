@@ -32,6 +32,8 @@ jobs:
           SHINYAPPS_SECRET: ${{ secrets.SAS }}
           AUTH0_KEY: ${{ secrets.A0K }}
           AUTH0_SECRET: ${{ secrets.A0S }}
+          BD_IP: ${{ secrets.DBIP }}
+          BD_PWD: ${{ secrets.DBPWD }}
         run: |
           Rscript "App/inst/update-app.R"
       - name: Commit results
