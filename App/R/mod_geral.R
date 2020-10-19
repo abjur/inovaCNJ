@@ -40,18 +40,20 @@ mod_geral_ui <- function(id){
     ),
 
     shiny::fluidRow(
-      bs4Dash::box(closable = FALSE,
-                   width = 6,
-                   title = "Comparação entre os tribunais da mesma justiça",
-                   highcharter::highchartOutput(ns("grafico"), height = "600px") %>%
-                     shinycssloaders::withSpinner()
+      bs4Dash::box(
+        closable = FALSE,
+        width = 6,
+        title = "Comparação entre os tribunais da mesma justiça",
+        highcharter::highchartOutput(ns("grafico"), height = "600px") %>%
+          shinycssloaders::withSpinner()
       ),
 
-      bs4Dash::box(closable = FALSE,
-                   width = 6,
-                   title = "Principais inconsistências",
-                   reactable::reactableOutput(ns("tabela")) %>%
-                     shinycssloaders::withSpinner()
+      bs4Dash::box(
+        closable = FALSE,
+        width = 6,
+        title = "Principais inconsistências",
+        reactable::reactableOutput(ns("tabela")) %>%
+          shinycssloaders::withSpinner()
       )
     )
   )
@@ -107,10 +109,18 @@ mod_geral_server <- function(id, app_data) {
         dplyr::summarise(dplyr::across(.fns = ~sum(!is.na(.x)))) %>%
         tidyr::pivot_longer(dplyr::everything()) %>%
         dplyr::arrange(dplyr::desc(value)) %>%
-        dplyr::mutate(name = stringr::str_replace(name,'inc_',''),
-                      name = stringr::str_to_title(name)) %>%
-        reactable::reactable(columns = list(name = reactable::colDef(name = 'Inconsistência'),
-                                            value = reactable::colDef(name = 'Quantidade')))
+        dplyr::mutate(
+          name = stringr::str_replace(name,'inc_',''),
+          name = stringr::str_to_title(name),
+          name = stringr::str_replace_all(name, "_", " ")
+        ) %>%
+        reactable::reactable(
+          defaultPageSize = 20,
+          columns = list(
+            name = reactable::colDef(name = 'Inconsistência'),
+            value = reactable::colDef(name = 'Quantidade')
+          )
+        )
     })
 
     output$indice <- bs4Dash::renderbs4ValueBox({

@@ -76,10 +76,19 @@ mod_incos_ui <- function(id){
   caixas <- purrr::imap(incos_mapeadas(), ~{
     bs4Dash::box(
       width = 4,
+      inputId = ns(paste0(.y, "_box")),
       title = textOutput(ns(paste0(.y, "_lab"))),
       collapsible = FALSE,
       closable = FALSE,
+      maximizable = TRUE,
       shiny::tags$p(.x$desc),
+
+      shiny::conditionalPanel(
+        stringr::str_glue("document.getElementById('{ns(.y)}_box').classList.contains('maximized-card')"),
+        reactable::reactableOutput(ns(paste0(.y, "_tab"))),
+        ns = ns
+      ),
+
       shiny::downloadButton(ns(paste0(.y, "_dld")))
     )
   })
@@ -109,29 +118,50 @@ mod_incos_server <- function(id, app_data) {
     nm <- names(incos)
 
     purrr::map(seq_along(nm), ~{
+
+      # label
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
         n <- app_data()$incos %>%
           dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
           nrow()
         stringr::str_glue("{incos[[.x]]$nome} ({n})")
       })
-    })
 
-    purrr::map(seq_along(nm), ~{
+      # download
       output[[paste0(nm[.x], "_dld")]] <- shiny::downloadHandler(
         filename = function() {
           paste0(Sys.Date(), "-inc_", nm[.x], ".xlsx")
         },
         content = function(file) {
           app_data()$incos %>%
+            dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
               id, justica, tribunal,
-              dplyr::matches(paste("^(inc_|sol_|info_).*", nm[.x]))
+              dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             ) %>%
             writexl::write_xlsx(file)
         }
       )
+
+      # tabela
+      output[[paste0(nm[.x], "_tab")]] <- reactable::renderReactable({
+
+        app_data()$incos %>%
+          dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
+          dplyr::select(
+            id, justica, tribunal,
+            dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
+          ) %>%
+          reactable::reactable()
+
+      })
+
+
     })
+
+
+
+
 
   })
 }

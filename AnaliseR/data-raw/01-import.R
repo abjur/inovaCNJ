@@ -62,6 +62,29 @@ library(magrittr)
 da_basic <- fs::dir_ls("../dados/processados/basicos/") %>%
   purrr::map_dfr(readr::read_rds, .id = "file")
 
+
+ler_assunto <- function(file) {
+  message(file)
+  readr::read_rds(file) %>%
+    dplyr::select(file_json, rowid, assunto) %>%
+    tidyr::unnest(assunto)
+}
+
+da_basic_assuntos <- fs::dir_ls("../dados/processados/basicos/") %>%
+  purrr::map_dfr(ler_assunto, .id = "file")
+
+da_basic_assuntos_tidy <- da_basic_assuntos %>%
+  dplyr::select(-assunto, -assuntoLocal) %>%
+  janitor::clean_names()
+
+da_basic_assuntos_tidy %>%
+  readr::write_rds("../dados/processados/da_assuntos.rds", compress = "xz")
+
+da_basic_assuntos_tidy %>%
+  feather::write_feather("../dados/processados/da_assuntos.feather")
+
+
+
 # da_basic %>%
 #   dplyr::group_by(file) %>%
 #   dplyr::summarise(
