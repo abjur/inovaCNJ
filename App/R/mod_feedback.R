@@ -17,9 +17,14 @@ mod_feedback_ui <- function(id){
       collapsible = FALSE,
       closable = FALSE,
       maximizable = FALSE,
-      shiny::fluidRow(
-        shiny::textAreaInput(ns("feedback"), "Como a ferramenta poderia melhorar?")
-      ),
+      shiny::fluidRow(col_12(
+        shiny::textAreaInput(
+          ns("feedback"),
+          "Como a ferramenta poderia melhorar?",
+          rows = 10,
+          cols = 400
+        )
+      )),
       shiny::fluidRow(
         shiny::actionButton(ns("enviar"), "Enviar!", icon = shiny::icon("paper-plane"))
       )
