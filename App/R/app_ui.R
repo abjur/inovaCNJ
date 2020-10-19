@@ -64,6 +64,11 @@ app_ui <- function(request) {
             "Feedback",
             tabName = "menu_feedback",
             icon = "comments"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
+            "Feedback",
+            tabName = "menu_teste",
+            icon = "comments"
           )
         )
       ),
@@ -91,6 +96,10 @@ app_ui <- function(request) {
           bs4Dash::bs4TabItem(
             tabName = "menu_feedback",
             mod_feedback_ui("feedback_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_teste",
+            mod_teste_ui("teste_ui_1")
           )
         )
       ),
