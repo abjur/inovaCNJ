@@ -172,7 +172,9 @@ mod_incos_server <- function(id, app_data) {
         app_data()$incos %>%
           dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
           dplyr::select(
-            id, numero, justica, tribunal,
+            id,
+            # numero,
+            justica, tribunal,
             dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
           ) %>%
           reactable::reactable(compact = TRUE, defaultPageSize = 8)
@@ -212,7 +214,9 @@ mod_incos_server <- function(id, app_data) {
           da_incos <- app_data()$incos %>%
             dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
-              id, numero, justica, tribunal,
+              id,
+              # numero,
+              justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             )
 
