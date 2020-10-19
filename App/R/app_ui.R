@@ -2,11 +2,11 @@
 #'
 #' @import shiny
 #' @noRd
-app_ui <- function(request) {
+app_ui <- function() {
 
   lista_tribunais <- unique(inovaCNJ::da_incos$tribunal)
 
-  tagList(
+  shiny::tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
     shinyalert::useShinyalert(),
@@ -40,31 +40,26 @@ app_ui <- function(request) {
         skin = "light",
         title = "{cnjInova}",
         bs4Dash::bs4SidebarMenu(
-          bs4Dash::bs4SidebarMenuItem(
-            "Geral",
-            tabName = "menu_geral",
-            icon = "bullseye"
-          ),
-          bs4Dash::bs4SidebarMenuItem(
-            "Inconsistencias",
-            tabName = "menu_incos",
-            icon = "database"
-          ),
           # bs4Dash::bs4SidebarMenuItem(
-          #   "Validação de dados",
-          #   tabName = "menu_validacao",
+          #   "Geral",
+          #   tabName = "menu_geral",
+          #   icon = "bullseye"
+          # ),
+          # bs4Dash::bs4SidebarMenuItem(
+          #   "Inconsistencias",
+          #   tabName = "menu_incos",
+          #   icon = "database"
+          # ),
+          # bs4Dash::bs4SidebarMenuItem(
+          #   "Verificação de dados",
+          #   tabName = "menu_verificacao",
           #   icon = "compress-arrows-alt"
           # ),
-          bs4Dash::bs4SidebarMenuItem(
-            "Verificação de dados",
-            tabName = "menu_verificacao",
-            icon = "compress-arrows-alt"
-          ),
-          bs4Dash::bs4SidebarMenuItem(
-            "Feedback",
-            tabName = "menu_feedback",
-            icon = "comments"
-          ),
+          # bs4Dash::bs4SidebarMenuItem(
+          #   "Feedback",
+          #   tabName = "menu_feedback",
+          #   icon = "comments"
+          # ),
           bs4Dash::bs4SidebarMenuItem(
             "Feedback",
             tabName = "menu_teste",
@@ -77,26 +72,22 @@ app_ui <- function(request) {
       body = bs4Dash::dashboardBody(
         fresh::use_theme(create_theme_css()),
         bs4Dash::bs4TabItems(
-          bs4Dash::bs4TabItem(
-            tabName = "menu_geral",
-            mod_geral_ui("geral_ui_1")
-          ),
-          bs4Dash::bs4TabItem(
-            tabName = "menu_incos",
-            mod_incos_ui("incos_ui_1")
-          ),
           # bs4Dash::bs4TabItem(
-          #   tabName = "menu_validacao",
-          #   mod_validacao_ui("validacao_ui_1")
+          #   tabName = "menu_geral",
+          #   mod_geral_ui("geral_ui_1")
           # ),
-          bs4Dash::bs4TabItem(
-            tabName = "menu_verificacao",
-            mod_verificacao_ui("verificacao_ui_1")
-          ),
-          bs4Dash::bs4TabItem(
-            tabName = "menu_feedback",
-            mod_feedback_ui("feedback_ui_1")
-          ),
+          # bs4Dash::bs4TabItem(
+          #   tabName = "menu_incos",
+          #   mod_incos_ui("incos_ui_1")
+          # ),
+          # bs4Dash::bs4TabItem(
+          #   tabName = "menu_verificacao",
+          #   mod_verificacao_ui("verificacao_ui_1")
+          # ),
+          # bs4Dash::bs4TabItem(
+          #   tabName = "menu_feedback",
+          #   mod_feedback_ui("feedback_ui_1")
+          # ),
           bs4Dash::bs4TabItem(
             tabName = "menu_teste",
             mod_teste_ui("teste_ui_1")
@@ -106,7 +97,7 @@ app_ui <- function(request) {
 
       # ----
       footer = bs4Dash::dashboardFooter(
-        copyrights = a(
+        copyrights = shiny::a(
           href = "https://abj.org.br",
           target = "_blank", "ABJ"
         ),
@@ -135,8 +126,7 @@ golem_add_external_resources <- function(){
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'inovaCNJ'
-    ),
-    shinyjs::useShinyjs()
+    )
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert()
   )
