@@ -31,6 +31,8 @@ app_server <- function( input, output, session ) {
 
   })
 
+  print(session$userData$auth0_info)
+
   mod_geral_server("geral_ui_1", app_data)
   mod_incos_server("incos_ui_1", app_data)
   mod_verificacao_server("verificacao_ui_1")
