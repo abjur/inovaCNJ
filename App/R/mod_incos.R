@@ -31,15 +31,18 @@ incos_mapeadas <- function() {
     ),
     "digito" = list(
       nome = "Dígito verificador",
-      desc = "Dígito verificador inconsistente com o número do processo (Res. 65 CNJ)."
+      desc = "Dígito verificador inconsistente com o número do processo (Res. 65 CNJ).",
+      sol = TRUE
     ),
     "municipio" = list(
       nome = "Código IBGE",
-      desc = "Código IBGE do município inconsistente com a base de dados do IBGE."
+      desc = "Código IBGE do município inconsistente com a base de dados do IBGE.",
+      sol = TRUE
     ),
     "justica" = list(
       nome = "Justiça/Tribunal",
-      desc = "Número CNJ do processo não bate com a Justiça ou o Tribunal (Res. 65 CNJ)."
+      desc = "Número CNJ do processo não bate com a Justiça ou o Tribunal (Res. 65 CNJ).",
+      sol = TRUE
     ),
     "orgao" = list(
       nome = "Código do Órgão",
@@ -47,11 +50,13 @@ incos_mapeadas <- function() {
     ),
     "eletronico" = list(
       nome = "Processo eletrônico",
-      desc = "Identificador de processo eletrônico fora do padrão."
+      desc = "Identificador de processo eletrônico fora do padrão.",
+      sol = TRUE
     ),
     "sistema" = list(
       nome = "Código do sistema",
-      desc = "Identificador de sistema processual fora do padrão."
+      desc = "Identificador de sistema processual fora do padrão.",
+      sol = TRUE
     ),
     "valor" = list(
       nome = "Valor da causa",
@@ -82,6 +87,8 @@ mod_incos_ui <- function(id){
       closable = FALSE,
       maximizable = TRUE,
       shiny::tags$p(.x$desc),
+      status = ifelse(is.null(.x$sol), "secondary", "primary"),
+
 
       shiny::conditionalPanel(
         stringr::str_glue("document.getElementById('{ns(.y)}_box').classList.contains('maximized-card')"),
@@ -117,12 +124,24 @@ mod_incos_ui <- function(id){
   })
 
   tagList(
-    fluidRow(caixas)
-    # bs4Dash::box(
-    #   title = "Inconsistências",
-    #   width = 12,
-    #   caixas
-    # )
+    shiny::fluidRow(bs4Dash::box(
+      title = "Informações básicas",
+      width = 12,
+      shiny::fluidRow(caixas[!stringr::str_detect(names(incos_mapeadas()), "classe|assunto|mov")]),
+      collapsed = FALSE
+    )),
+    shiny::fluidRow(bs4Dash::box(
+      title = "Classe/Assunto",
+      width = 12,
+      shiny::fluidRow(caixas[stringr::str_detect(names(incos_mapeadas()), "classe|assunto")]),
+      collapsed = FALSE
+    )),
+    shiny::fluidRow(bs4Dash::box(
+      title = "Movimentações",
+      width = 12,
+      shiny::fluidRow(caixas[stringr::str_detect(names(incos_mapeadas()), "mov")]),
+      collapsed = FALSE
+    ))
   )
 
 }

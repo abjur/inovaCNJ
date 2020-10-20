@@ -68,7 +68,7 @@ O menu principal contém 4 cards e 1 gráfico e 1 tabela, descritos a seguir.
 
 **Para mudar de tribunal:** Acesse o menu lateral, no canto superior direito, ao lado do botão de log-out.
 
-![](images/menu_lateral.png){align="center" width="188"}
+![](images/menu_lateral.png)
 
 ## Aba 2: Inconsistências
 
