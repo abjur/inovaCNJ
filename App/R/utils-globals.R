@@ -1,0 +1,11 @@
+utils::globalVariables(c(
+  "justica",
+  "numero",
+  "id",
+  "tribunal",
+  "value",
+  "indice",
+  "name",
+  "input_date",
+  "user"
+))
