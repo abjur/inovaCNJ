@@ -5,15 +5,15 @@ incos_mapeadas <- function() {
       nome = "Assunto (i)",
       desc = "Assunto vazio"
     ),
-    "assunto_generico" = list(
+    "generico" = list(
       nome = "Assunto (ii)",
       desc = 'Assunto genérico'
     ),
-    "assunto_nao_bate_com_tpu" = list(
+    "assunto_tpu" = list(
       nome = "Assunto (iii)",
       desc = "Código CNJ do assunto não bate com a TPU (Res. 46 CNJ)."
     ),
-    "nao_possui_assunto_principal" = list(
+    "principal" = list(
       nome = "Assunto (iv)",
       desc = 'Não possui identificação de assunto "principal"'
     ),
@@ -89,10 +89,13 @@ mod_incos_ui <- function(id){
       shiny::tags$p(.x$desc),
       status = ifelse(is.null(.x$sol), "secondary", "primary"),
 
+      shiny::fluidRow(
+        shiny::downloadButton(ns(paste0(.y, "_dld")))
+      ),
 
       shiny::conditionalPanel(
         stringr::str_glue("document.getElementById('{ns(.y)}_box').classList.contains('maximized-card')"),
-        shiny::fluidRow(shiny::column(width = 12,
+        shiny::div(style='overflow-y: auto;height:80vh', shiny::column(width = 12,
           shiny::fluidRow(
             shiny::column(
               width = 12,
@@ -116,9 +119,6 @@ mod_incos_ui <- function(id){
           )
         )),
         ns = ns
-      ),
-      shiny::fluidRow(
-        shiny::downloadButton(ns(paste0(.y, "_dld")))
       )
     )
   })
@@ -127,13 +127,13 @@ mod_incos_ui <- function(id){
     shiny::fluidRow(bs4Dash::box(
       title = "Informações básicas",
       width = 12,
-      shiny::fluidRow(caixas[!stringr::str_detect(names(incos_mapeadas()), "classe|assunto|mov")]),
+      shiny::fluidRow(caixas[!stringr::str_detect(names(incos_mapeadas()), "classe|assunto|mov|generico|principal")]),
       collapsed = FALSE
     )),
     shiny::fluidRow(bs4Dash::box(
       title = "Classe/Assunto",
       width = 12,
-      shiny::fluidRow(caixas[stringr::str_detect(names(incos_mapeadas()), "classe|assunto")]),
+      shiny::fluidRow(caixas[stringr::str_detect(names(incos_mapeadas()), "classe|assunto|generico|principal")]),
       collapsed = FALSE
     )),
     shiny::fluidRow(bs4Dash::box(
@@ -181,7 +181,7 @@ mod_incos_server <- function(id, app_data) {
           app_data()$incos %>%
             dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
-              id, justica, tribunal,
+              id, numero, justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             ) %>%
             writexl::write_xlsx(file)
@@ -195,7 +195,7 @@ mod_incos_server <- function(id, app_data) {
           dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
           dplyr::select(
             id,
-            # numero,
+            numero,
             justica, tribunal,
             dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
           ) %>%
@@ -233,22 +233,24 @@ mod_incos_server <- function(id, app_data) {
               input_date = idate
             )
 
-          da_incos <- app_data()$incos %>%
+          da_incos_filter <- app_data()$incos %>%
             dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
               id,
-              # numero,
+              numero,
               justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             )
 
-          if (all(names(da_incos) %in% names(da)) && nrow(da_incos) == nrow(da)) {
+          if (all(names(da_incos_filter) %in% names(da)) && nrow(da_incos_filter) == nrow(da)) {
 
 
 
             try({
 
               con <- conectar()
+
+              # browser()
 
               RPostgres::dbWriteTable(con, nm[.x], da, append = TRUE)
 
@@ -293,8 +295,8 @@ mod_incos_server <- function(id, app_data) {
           shinyalert::shinyalert(
             "Insira um arquivo válido",
             stringr::str_glue(
-              "Um arquivo válido contém as mesmas linhas e colunas da base",
-              "disponível para Download e, eventualmente, uma coluna",
+              "Um arquivo válido contém as mesmas linhas e colunas da base ",
+              "disponível para Download e, eventualmente, uma coluna ",
               "adicional contendo observações e justificativas."
             ),
             type = "error",

@@ -36,3 +36,10 @@ deploy <- function() {
   )
   invisible()
 }
+
+apagar_todas_tabelas <- function() {
+  con <- conectar()
+  tabs <- RPostgres::dbListTables(con)
+  purrr::walk(tabs, ~RPostgres::dbRemoveTable(con, .x))
+  desconectar(con)
+}

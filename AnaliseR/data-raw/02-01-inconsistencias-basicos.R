@@ -11,8 +11,9 @@ sgt_assunto <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
 #' as colunas sempre apresentam uma descrição da inconsistência
 #' e as vezes apresentam a solução da inconsistencia
 #'
-#' sufixos:
+#' prefixos:
 #' inc_xxx: inconsistência do problema xxx
+#' info_xxx: coluna que tem problema xxx
 #' sol_xxx: solução do problema xxx
 
 # número incoerente com tribunal / justiça --------------------------------
@@ -303,12 +304,27 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
                                              is.na(dscr) & !is.na(info_assunto)~'(Vazio)',
                                              TRUE ~dscr)) %>%
     dplyr::group_by(file_json,rowid) %>%
-    dplyr::summarise(info_assunto = paste0(na.exclude(info_assunto),collapse = ', '),
-                     info_assunto_descr = paste0(na.exclude(dscr),collapse = ', '),
-                     inc_nao_possui_assunto_principal = ifelse(info_assunto == '', '',min(inc_nao_e_assunto_principal)),
-                     inc_assunto_generico = ifelse(info_assunto == '', '',min(inc_assunto_generico)),
-                     inc_assunto_nao_bate_com_tpu = max(inc_assunto_nao_bate_com_tpu),
-                     inc_assunto_vazio = min(inc_assunto_vazio)) %>%
+    dplyr::summarise(
+
+      info_assunto = paste0(na.exclude(info_assunto),collapse = ', '),
+
+      # nao eh assunto principal
+      inc_principal = ifelse(info_assunto == '', '',min(inc_nao_e_assunto_principal)),
+      info_principal = info_assunto,
+
+      # assunto generico
+      inc_generico = ifelse(info_assunto == '', '',min(inc_assunto_generico)),
+      info_generico = info_assunto,
+
+      # assunto tpu
+      inc_assunto_tpu = max(inc_assunto_nao_bate_com_tpu),
+      info_assunto_tpu = info_assunto,
+
+      # assunto vazio
+      inc_assunto_vazio = min(inc_assunto_vazio)
+
+    ) %>%
+    dplyr::select(-info_assunto) %>%
     dplyr::filter_at(dplyr::vars(dplyr::starts_with('inc')),dplyr::any_vars(. != '')) %>%
     dplyr::mutate(dplyr::across(dplyr::starts_with('inc'),~ifelse(.x=='',NA_character_,.x)))
 
@@ -324,14 +340,27 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
     dplyr::left_join(sgt_assunto,'codigo') %>%
     dplyr::filter(!is.na(codigo)) %>%
     dplyr::group_by(classe_processual,codigo) %>%
-    dplyr::mutate(n = dplyr::n()) %>% dplyr::ungroup() %>%
+    dplyr::mutate(n = dplyr::n()) %>%
+    dplyr::ungroup() %>%
     dplyr::mutate(inc_classe_assunto_raro = ifelse(n <= quantile(n,0.05),'Combinação rara de classe e assunto','')) %>%
-    dplyr::select(file_json,rowid,inc_classe_assunto_raro)
+    dplyr::filter(inc_classe_assunto_raro != "") %>%
+    dplyr::select(
+      file_json,
+      rowid,
+      info_classe_assunto_raro_classe = classe_processual,
+      info_classe_assunto_raro_tpassunto = tipo_codigo,
+      info_classe_assunto_raro_assunto = codigo,
+      info_classe_assunto_raro_descr = dscr,
+      inc_classe_assunto_raro
+    )
 }
 
 tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assunto)
-tab_classe_assunto = inc_classe_assunto_fun(da_assunto = assuntos,da_basic = da_basic_transform,sgt_assunto = sgt_assunto)
-
+tab_classe_assunto = inc_classe_assunto_fun(
+  da_assunto = assuntos,
+  da_basic = da_basic_transform,
+  sgt_assunto = sgt_assunto
+)
 
 # export ------------------------------------------------------------------
 
@@ -339,13 +368,13 @@ list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto')] %>%
   purrr::map(~get(.x)(da_basic_transform))
 
 da_inicial <- da_basic_transform %>%
-  select(id, rowid, file_json, justica, tribunal)
+  select(id, rowid, numero, file_json, justica, tribunal)
 
 da_incos <- list_incos %>%
   reduce(left_join, by = "id", .init = da_inicial) %>%
   filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
-  left_join(tab_assunto,by = c('file_json','rowid')) %>%
-  left_join(tab_classe_assunto,by = c('file_json','rowid'))
+  left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
+  left_join(tab_classe_assunto,by = c('file_json', 'rowid'))
 
 readr::write_rds(
   da_incos,
