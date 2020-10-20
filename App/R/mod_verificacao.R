@@ -21,6 +21,7 @@ mod_verificacao_ui <- function(id){
       shiny::fluidRow(col_12(
         reactable::reactableOutput(ns("tabela")) %>%
           shinycssloaders::withSpinner(),
+        shiny::br()
       )),
       shiny::fluidRow(
         shiny::actionButton(
