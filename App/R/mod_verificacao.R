@@ -57,6 +57,7 @@ mod_verificacao_server <- function(id){
 
 
     dados_sugestoes <- shiny::reactive({
+      input$atualizar
       con <- conectar()
       dados <- RPostgres::dbReadTable(con, "sugestoes")
       desconectar(con)
@@ -95,7 +96,6 @@ mod_verificacao_server <- function(id){
         message = "Usuário precisa ser administrador para acessar essa parte da aplicação."
       ))
 
-      input$atualizar
       reactable::reactable(
         dados_sugestoes(),
         selection = "single",
