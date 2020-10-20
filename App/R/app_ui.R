@@ -20,7 +20,7 @@ app_ui <- function() {
           "tribunal",
           label = "Tribunais",
           sort(lista_tribunais),
-          "TJSP",
+          "TJRJ",
           options = list(
             "actions-box" = TRUE,
             size = 10,
