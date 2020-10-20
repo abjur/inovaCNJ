@@ -20,9 +20,9 @@ mod_verificacao_ui <- function(id){
 
       shiny::fluidRow(col_12(
         reactable::reactableOutput(ns("tabela")) %>%
-          shinycssloaders::withSpinner(),
-        shiny::br()
+          shinycssloaders::withSpinner()
       )),
+      shiny::br(),
       shiny::fluidRow(
         shiny::actionButton(
           ns("atualizar"), "Atualizar",
@@ -41,8 +41,12 @@ mod_verificacao_ui <- function(id){
 
       shiny::fluidRow(col_12(
         reactable::reactableOutput(ns("tabela_selecionada")) %>%
-          shinycssloaders::withSpinner() ,
-      ))
+          shinycssloaders::withSpinner(),
+      )),
+      shiny::br(),
+      shiny::fluidRow(
+        shiny::downloadButton(ns("download"))
+      )
 
     )
   )
@@ -116,7 +120,6 @@ mod_verificacao_server <- function(id){
         message = "Nenhuma inconsistência selecionada."
       ))
 
-      input$atualizar
       dados_tabela() %>%
         dplyr::select(-user, -input_date) %>%
         reactable::reactable(
@@ -125,6 +128,20 @@ mod_verificacao_server <- function(id){
         )
 
     })
+
+    output$download <- shiny::downloadHandler(
+      filename = function() {
+        selecionado <- selected()
+        linha <- dados_sugestoes()[selecionado, ]
+        tab <- linha[["inconsistencia"]]
+        paste0(Sys.Date(), "-inc_", tab, ".xlsx")
+      },
+      content = function(file) {
+        dados_tabela() %>%
+          dplyr::select(-user, -input_date) %>%
+          writexl::write_xlsx(file)
+      }
+    )
 
 
   })
