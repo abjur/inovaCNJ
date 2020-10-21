@@ -3,5 +3,10 @@ dados
 models
 .Rhistory
 .RData
+<<<<<<< HEAD
+*/__pycache__
+.DS_Store
+=======
 rsconnect
 .Renviron
+>>>>>>> origin/master

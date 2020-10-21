@@ -1,5 +1,4 @@
 library(tidyverse)
-
 da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>% dplyr::distinct()
@@ -7,6 +6,10 @@ sgt_assunto <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
                                   delim = ';',col_types = readr::cols(cod_filhos = 'c')) %>%
   dplyr::transmute(codigo,dscr= stringr::str_squish(descricao))
 
+mov <- readr::read_csv(
+  '../dados/processados/mov_incos.csv',
+  col_types = readr::cols(.default = 'c')
+)
 #' esse código cria bases com id e coluna para cada possível inconsistência.
 #' as colunas sempre apresentam uma descrição da inconsistência
 #' e as vezes apresentam a solução da inconsistencia
@@ -17,7 +20,6 @@ sgt_assunto <- readr::read_delim(file = '../dados/brutos/sgt_assuntos.csv',
 #' sol_xxx: solução do problema xxx
 
 # número incoerente com tribunal / justiça --------------------------------
-
 inc_numero_justica_tribunal_fun <- function(da) {
   message("justica")
 
@@ -217,7 +219,6 @@ inc_valor_fun <- function(da) {
 }
 
 
-
 # orgao vazio ou inconsistente --------------------------------------------
 
 inc_orgao_fun <- function(da) {
@@ -362,10 +363,149 @@ tab_classe_assunto = inc_classe_assunto_fun(
   sgt_assunto = sgt_assunto
 )
 
+
+# movimentação deveria ser do magistrado mas é de servidor ----------------
+inc_mov_responsavel_fun <- function(mov) {
+  message('responsável movimentação')
+
+  mov %>%
+    dplyr::mutate(
+      inc_responsavel_mov = case_when(
+        (tipoResponsavelMovimento == '1' &
+         !(movimentoLocal.codigoPaiNacional %in% c('1', '12524'))) |
+        (tipoResponsavelMovimento == '0' &
+         movimentoLocal.codigoPaiNacional %in% c('1', '12524'))
+        ~ 'Movimentação Com Responsável Incorreto'
+      ),
+      sol_responsavel_mov = case_when(
+        movimentoLocal.codigoPaiNacional %in% c('1', '12524') ~ '1',
+        !(movimentoLocal.codigoPaiNacional %in% c('1', '12524')) ~ '0'
+      )
+    ) %>%
+    transmute(
+      id,
+      inc_responsavel_mov,
+      info_responsavel_mov = tipoResponsavelMovimento,
+      sol_responsavel_mov
+    ) %>%
+    filter(!is.na(inc_responsavel_mov))
+}
+
+# tempo de movimentação muito demorado -------------------------------------
+inc_mov_demorada_fun <- function(mov) {
+  message('movimentação muito demorada')
+
+  mov %>%
+    dplyr::mutate(
+      data = dataHora,
+      data = str_sub(data, 1L, 8L),
+      data = lubridate::ymd(data, quiet = TRUE)
+    ) %>%
+    dplyr::group_by(file_json, rowid) %>%
+    dplyr::arrange(file_json, rowid, desc(data)) %>%
+    dplyr::select(id, data, dataHora, file_json, rowid) %>%
+    dplyr::mutate(movimentacao_demorada = -1*as.numeric(lead(data) - data)) %>%
+    dplyr::mutate(
+      inc_mov_demorada = case_when(
+        movimentacao_demorada > 1825 ~
+        'Tempo desde última movimentação acima de 5 anos.'
+      )
+    ) %>%
+    ungroup() %>%
+    dplyr::transmute(
+      id,
+      inc_mov_demorada,
+      info_mov_demorada = dataHora,
+    ) %>%
+    filter(!is.na(inc_mov_demorada))
+}
+
+# código pai faltante na movimentação local --------------------------------
+inc_mov_cod_pai_faltante_fun <- function (mov) {
+  message('código pai faltante')
+
+  sgt_movs <- '../dados/brutos/sgt_movimentos.csv' %>%
+    readr::read_delim(
+      delim = ';', col_types = readr::cols(.default = 'c')
+    ) %>%
+    dplyr::transmute(
+      codigo,
+      dscr = stringr::str_squish(descricao),
+      cod_pai = str_replace(cod_pai, '(\\.0)$', ''),
+      cod_filhos
+    )
+
+  mov %>%
+    dplyr::select(
+      id, movimentoNacional.codigoNacional, movimentoLocal.codigoPaiNacional
+    ) %>%
+    filter(is.na(movimentoLocal.codigoPaiNacional)) %>%
+    dplyr::mutate(
+      inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
+    ) %>%
+    dplyr::left_join(
+      select(sgt_movs, codigo, cod_pai), by = c(
+        'movimentoNacional.codigoNacional' = 'codigo'
+      )
+    ) %>%
+    dplyr::transmute(
+      id,
+      inc_cod_pai_faltante,
+      info_cod_pai_faltante = movimentoLocal.codigoPaiNacional,
+      sol_cod_pai_faltante = cod_pai
+    ) %>%
+    filter(!is.na(inc_cod_pai_faltante))
+}
+
+# apontar processos cuja duração é maior do que o 75º percentil -----------
+inc_mov_processo_longo_fun <- function(mov){
+  message('processos longos')
+
+  mov %>%
+    dplyr::mutate(
+      data = dataHora,
+      data = str_sub(data, 1L, 8L),
+      data = lubridate::ymd(data, quiet = TRUE)
+    ) %>%
+    dplyr::group_by(file_json, rowid) %>%
+    dplyr::arrange(file_json, rowid, desc(data)) %>%
+    dplyr::select(id, data, dataHora, file_json, rowid) %>%
+    dplyr::mutate(processo_longo = as.numeric(first(data) - last(data))) %>%
+    ungroup() %>%
+    select(-data) %>%
+    distinct_at(vars(-dataHora), .keep_all = TRUE) %>%
+    mutate(
+      tempo_corte = quantile(processo_longo, probs = .75, na.rm = TRUE),
+      inc_processo_longo = case_when(
+      processo_longo > tempo_corte ~
+      'Duração do processo é maior do que 75% de todos os processos.'
+    )) %>%
+    transmute(
+      id,
+      inc_processo_longo,
+      info_processo_longo = dataHora,
+    ) %>%
+    filter(!is.na(inc_processo_longo))
+}
+
+
 # export ------------------------------------------------------------------
 
-list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto')] %>%
+list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto|mov')] %>%
   purrr::map(~get(.x)(da_basic_transform))
+
+tab_incos_movs <- ls()[str_detect(ls(), "^inc_mov")] %>%
+  purrr::set_names() %>%
+  purrr::map(~get(.x)(mov)) %>%
+  purrr::imap(~{
+    .x %>%
+      dplyr::group_by(id) %>%
+      nest() %>%
+      ungroup() %>%
+      set_names(c("id", .y))
+  }) %>%
+  reduce(left_join, by = "id", .init = distinct(mov, id)) %>%
+  mutate(id = as.integer(id))
 
 da_inicial <- da_basic_transform %>%
   select(id, rowid, numero, file_json, justica, tribunal)
@@ -374,7 +514,8 @@ da_incos <- list_incos %>%
   reduce(left_join, by = "id", .init = da_inicial) %>%
   filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
   left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
-  left_join(tab_classe_assunto,by = c('file_json', 'rowid'))
+  left_join(tab_classe_assunto, by = c('file_json', 'rowid')) %>%
+  left_join(tab_incos_movs, by = "id")
 
 readr::write_rds(
   da_incos,
