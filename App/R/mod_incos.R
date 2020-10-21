@@ -61,6 +61,24 @@ incos_mapeadas <- function() {
     "valor" = list(
       nome = "Valor da causa",
       desc = "Valor negativo ou muito alto para os padrões do Tribunal."
+    ),
+    "mov_responsavel_fun" = list(
+      nome = "Responsável pela movimentação",
+      desc = "Movimentação deveria ser do magistrado mas é de servidor",
+      sol = TRUE
+    ),
+    "mov_cod_pai_faltante_fun" = list(
+      nome = "Código pai faltante",
+      desc = "Código pai está faltante na movimentação local.",
+      sol = TRUE
+    ),
+    "mov_processo_longo_fun" = list(
+      nome = "Código pai faltante",
+      desc = "Processos cuja duração é maior que o 75º percentil dos dados de todos os processos."
+    ),
+    "mov_demorada_fun" = list(
+      nome = "Movimentação demorada",
+      desc = "Tempo desde última movimentação acima de 5 anos."
     )
   )
 }
@@ -146,6 +164,14 @@ mod_incos_ui <- function(id){
 
 }
 
+vazio <- function(x) {
+  if (is.list(x)) {
+    purrr::map_lgl(x, is.null)
+  } else {
+    is.na(x)
+  }
+}
+
 #' incos Server Functions
 #'
 #' @noRd
@@ -167,7 +193,7 @@ mod_incos_server <- function(id, app_data) {
       # label
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
         n <- app_data()$incos %>%
-          dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
+          dplyr::filter(!vazio(.data[[paste0("inc_", nm[.x])]])) %>%
           nrow()
         stringr::str_glue("{incos[[.x]]$nome} ({n})")
       })
@@ -179,11 +205,12 @@ mod_incos_server <- function(id, app_data) {
         },
         content = function(file) {
           app_data()$incos %>%
-            dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
+            dplyr::filter(!vazio(.data[[paste0("inc_", nm[.x])]])) %>%
             dplyr::select(
               id, numero, justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
             ) %>%
+            tidyr::unnest(where(is.list)) %>%
             writexl::write_xlsx(file)
         }
       )
@@ -192,13 +219,14 @@ mod_incos_server <- function(id, app_data) {
       output[[paste0(nm[.x], "_tab")]] <- reactable::renderReactable({
 
         app_data()$incos %>%
-          dplyr::filter(!is.na(.data[[paste0("inc_", nm[.x])]])) %>%
+          dplyr::filter(!vazio(.data[[paste0("inc_", nm[.x])]])) %>%
           dplyr::select(
             id,
             numero,
             justica, tribunal,
             dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
           ) %>%
+          tidyr::unnest(where(is.list)) %>%
           reactable::reactable(compact = TRUE, defaultPageSize = 8)
 
       })
@@ -240,7 +268,8 @@ mod_incos_server <- function(id, app_data) {
               numero,
               justica, tribunal,
               dplyr::matches(paste0("^(inc_|sol_|info_).*", nm[.x]))
-            )
+            ) %>%
+            tidyr::unnest(where(is.list))
 
           if (all(names(da_incos_filter) %in% names(da)) && nrow(da_incos_filter) == nrow(da)) {
 
