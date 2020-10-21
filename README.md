@@ -1,6 +1,6 @@
-# inovaCNJ
+# faxinaJud
 
-A plataforma `{inovaCNJ}` foi elaborada para resolver duas dores:
+A plataforma **faxinaJud**, do projeto `{inovaCNJ}` foi elaborada para resolver duas dores:
 
 1)  Inconsistências precisam ser monitoradas continuamente.
 
@@ -22,7 +22,7 @@ A pessoa técnica judiciária pode realizar as atividades a seguir.
 
 -   Visualizar inconsistências.
 
--   fazer o download da planilha de inconsistências.
+-   Fazer o download da planilha de inconsistências.
 
 -   Submeter uma tabela de inconsistências arrumadas. As tabelas submetidas são inseridas em um banco de dados de sugestões.
 
@@ -97,4 +97,4 @@ As bases validadas ficam em um banco de dados, e podem ser utilizadas pelo CNJ p
 
 # Vídeo
 
-O vídeo de demonstração pode ser acessado [nesse link]().
+O vídeo de demonstração pode ser acessado [nesse link](https://youtu.be/UP3g0bb0BWM).
