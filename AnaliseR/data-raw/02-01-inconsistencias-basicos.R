@@ -10,7 +10,6 @@ mov <- readr::read_csv(
   '../dados/processados/mov_incos.csv',
   col_types = readr::cols(.default = 'c')
 )
-
 #' esse código cria bases com id e coluna para cada possível inconsistência.
 #' as colunas sempre apresentam uma descrição da inconsistência
 #' e as vezes apresentam a solução da inconsistencia
@@ -438,7 +437,7 @@ inc_cod_pai_faltante_fun <- function (mov) {
 
   mov %>%
     dplyr::select(
-      id, movimentoLocal.codigoMovimento, movimentoLocal.codigoPaiNacional
+      id, movimentoNacional.codigoNacional, movimentoLocal.codigoPaiNacional
     ) %>%
     filter(is.na(movimentoLocal.codigoPaiNacional)) %>%
     dplyr::mutate(
@@ -446,7 +445,7 @@ inc_cod_pai_faltante_fun <- function (mov) {
     ) %>%
     dplyr::left_join(
       select(sgt_movs, codigo, cod_pai), by = c(
-        'movimentoLocal.codigoMovimento' = 'codigo'
+        'movimentoNacional.codigoNacional' = 'codigo'
       )
     ) %>%
     dplyr::transmute(
