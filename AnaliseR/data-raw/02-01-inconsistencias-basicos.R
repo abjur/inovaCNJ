@@ -365,7 +365,7 @@ tab_classe_assunto = inc_classe_assunto_fun(
 
 
 # movimentação deveria ser do magistrado mas é de servidor ----------------
-inc_responsavel_mov_fun <- function(mov) {
+inc_mov_responsavel_fun <- function(mov) {
   message('responsável movimentação')
 
   mov %>%
@@ -388,7 +388,7 @@ inc_responsavel_mov_fun <- function(mov) {
       info_responsavel_mov = tipoResponsavelMovimento,
       sol_responsavel_mov
     ) %>%
-    filter(!is.na(inc_responsavel))
+    filter(!is.na(inc_responsavel_mov))
 }
 
 # tempo de movimentação muito demorado -------------------------------------
@@ -421,7 +421,7 @@ inc_mov_demorada_fun <- function(mov) {
 }
 
 # código pai faltante na movimentação local --------------------------------
-inc_cod_pai_faltante_fun <- function (mov) {
+inc_mov_cod_pai_faltante_fun <- function (mov) {
   message('código pai faltante')
 
   sgt_movs <- '../dados/brutos/sgt_movimentos.csv' %>%
@@ -458,7 +458,7 @@ inc_cod_pai_faltante_fun <- function (mov) {
 }
 
 # apontar processos cuja duração é maior do que o 75º percentil -----------
-inc_processo_longo_fun <- function(mov){
+inc_mov_processo_longo_fun <- function(mov){
   message('processos longos')
 
   mov %>%
@@ -491,8 +491,21 @@ inc_processo_longo_fun <- function(mov){
 
 # export ------------------------------------------------------------------
 
-list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto')] %>%
+list_incos <- ls()[str_detect(ls(), "^inc_") & !str_detect(ls(), 'assunto|mov')] %>%
   purrr::map(~get(.x)(da_basic_transform))
+
+tab_incos_movs <- ls()[str_detect(ls(), "^inc_mov")] %>%
+  purrr::set_names() %>%
+  purrr::map(~get(.x)(mov)) %>%
+  purrr::imap(~{
+    .x %>%
+      dplyr::group_by(id) %>%
+      nest() %>%
+      ungroup() %>%
+      set_names(c("id", .y))
+  }) %>%
+  reduce(left_join, by = "id", .init = distinct(mov, id)) %>%
+  mutate(id = as.integer(id))
 
 da_inicial <- da_basic_transform %>%
   select(id, rowid, numero, file_json, justica, tribunal)
@@ -501,7 +514,8 @@ da_incos <- list_incos %>%
   reduce(left_join, by = "id", .init = da_inicial) %>%
   filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
   left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
-  left_join(tab_classe_assunto,by = c('file_json', 'rowid'))
+  left_join(tab_classe_assunto, by = c('file_json', 'rowid')) %>%
+  left_join(tab_incos_movs, by = "id")
 
 readr::write_rds(
   da_incos,

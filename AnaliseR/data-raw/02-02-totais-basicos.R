@@ -10,7 +10,8 @@ da_totais_basic <- da_basic_transform %>%
 da_totais_incos <- da_incos %>%
   group_by(justica, tribunal) %>%
   summarise(
-    across(starts_with("inc"), ~sum(!is.na(.x))),
+    across(matches("^inc_mov"), ~sum(map_lgl(.x, is.null))),
+    across(matches("^inc_[a-z]{3}[^_]"), ~sum(!is.na(.x))),
     .groups = "drop"
   ) %>%
   pivot_longer(starts_with("inc")) %>%
@@ -31,4 +32,3 @@ da_totais <- da_totais_basic %>%
   arrange(justica, ranking)
 
 readr::write_rds(da_totais, "data-raw/p02_da_totais.rds")
-
