@@ -1,6 +1,7 @@
 import json
 import random
 
+
 class Parser:
 
     """ parse the progress of all CNJ lawsuits """
