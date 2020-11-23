@@ -78,7 +78,7 @@ parse_file <- function(infile,names){
     janitor::clean_names()
 
   da_basic_transform <- da_basic %>%
-    dplyr::select(-assunto) %>% {
+    dplyr::select(-assunto,-movimento) %>% {
       if('valor_causa' %in% names(.)){
         dplyr::mutate(.,valor_causa = as.numeric(valor_causa))
       } else{
