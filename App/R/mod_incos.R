@@ -73,7 +73,7 @@ incos_mapeadas <- function() {
       sol = TRUE
     ),
     "mov_processo_longo_fun" = list(
-      nome = "Código pai faltante",
+      nome = "Tempo alto de tramitação",
       desc = "Processos cuja duração é maior que o 75º percentil dos dados de todos os processos."
     ),
     "mov_demorada_fun" = list(

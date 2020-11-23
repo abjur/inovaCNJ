@@ -1,3 +1,4 @@
+options(shiny.maxRequestSize=30*1024^3)
 #' The application server-side
 #'
 #' @param input,output,session Internal parameters for {shiny}.
@@ -30,6 +31,10 @@ app_server <- function( input, output, session ) {
     )
 
   })
+
+  infile <- mod_input_server("input_ui_1")
+
+  #infile()$da_incos e infile()$da_totais
 
   mod_geral_server("geral_ui_1", app_data)
   mod_incos_server("incos_ui_1", app_data)
