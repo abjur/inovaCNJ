@@ -6,9 +6,9 @@
 #'
 #' @export
 parse_file <- function(infile,names){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)
-  # infile
-  # print('parte1')
+  infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[1:3]
+  names = str_extract(infile[1:3],'processos.[^/]*json$')
+
   aux_files <- infile %>%
     tibble::enframe() %>%
     dplyr::transmute(
@@ -35,7 +35,8 @@ parse_file <- function(infile,names){
       tibble::as_tibble() %>%
       tidyr::chop(orgaoJulgador) %>%
       tidyr::unnest(orgaoJulgador) %>%
-      dplyr::bind_cols(dplyr::select(da, where(~!is.list(.x)))) %>%
+      dplyr::bind_cols(dplyr::select(da,movimento),
+                       dplyr::select(da, where(~!is.list(.x)))) %>%
       janitor::clean_names() %>%
       dplyr::mutate(dplyr::across(c(where(~!is.list(.x))), .fns = as.character)) %>%
       tibble::rowid_to_column()
@@ -58,6 +59,13 @@ parse_file <- function(infile,names){
     ler_basic(data$path)
   })
 
+  # Andre mexer aqui --------------------------------------------------------
+
+  da_movs <- da_basic %>%
+    dplyr::select(file_json,rowid,movimento) %>%
+    tidyr::unnest(movimento)
+
+  # -------------------------------------------------------------------------
 
   da_basic_assuntos <- da_basic %>%
     dplyr::select(file_json, rowid, assunto) %>%
@@ -88,7 +96,8 @@ parse_file <- function(infile,names){
 
 
   return(list(assuntos = da_basic_assuntos,
-              basic = da_basic_transform))
+              basic = da_basic_transform,
+              movs = da_movs))
 }
 
 #' Estrutura as bases de dados
@@ -103,25 +112,9 @@ cria_da_incos <- function(lista_bases,session){
   # lista_bases <- parse_file(infile = infile[1:6],names = str_extract(infile[1:6],'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
+  mov <- lista_bases$movs
 
   updateProgressBar(session = session,id = "pb_upload",value = 30)
-
-# Andre mexer aqui --------------------------------------------------------
-
-  #Criar uma tabela chamada "mov"
-  #a função cria_da_incos recebe como argumento o "lista_bases" que contém:
-    # basic: é o da_basic_transform, com as variáveis básicas
-    # assuntos: é a base de assuntos
-
-  # mov <- readr::read_csv(
-  #   '../dados/processados/mov_incos.csv',
-  #   col_types = readr::cols(.default = 'c')
-  # )
-
-
-# -------------------------------------------------------------------------
-
-
 
   # número incoerente com tribunal / justiça --------------------------------
   inc_numero_justica_tribunal_fun <- function(da) {
