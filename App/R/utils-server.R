@@ -6,7 +6,7 @@
 #'
 #' @export
 parse_file <- function(infile,names){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[1:3]
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)
   # infile
   # print('parte1')
   aux_files <- infile %>%
@@ -99,7 +99,8 @@ parse_file <- function(infile,names){
 #'
 #' @export
 cria_da_incos <- function(lista_bases,session){
-  # lista_bases <- parse_file(infile = infile[1:6])
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)
+  # lista_bases <- parse_file(infile = infile[1:6],names = str_extract(infile[1:6],'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
 
@@ -609,18 +610,18 @@ cria_da_incos <- function(lista_bases,session){
 
   updateProgressBar(session = session,id = "pb_upload",value = 85)
 
-  tab_incos_movs <- ls()[str_detect(ls(), "^inc_mov")] %>%
-    purrr::set_names() %>%
-    purrr::map(~get(.x)(mov)) %>%
-    purrr::imap(~{
-      .x %>%
-        dplyr::group_by(id) %>%
-        nest() %>%
-        ungroup() %>%
-        set_names(c("id", .y))
-    }) %>%
-    reduce(left_join, by = "id", .init = distinct(mov, id)) %>%
-    mutate(id = as.integer(id))
+  # tab_incos_movs <- ls()[str_detect(ls(), "^inc_mov")] %>%
+  #   purrr::set_names() %>%
+  #   purrr::map(~get(.x)(mov)) %>%
+  #   purrr::imap(~{
+  #     .x %>%
+  #       dplyr::group_by(id) %>%
+  #       nest() %>%
+  #       ungroup() %>%
+  #       set_names(c("id", .y))
+  #   }) %>%
+  #   reduce(left_join, by = "id", .init = distinct(mov, id)) %>%
+  #   mutate(id = as.integer(id))
 
   da_inicial <- da_basic_transform %>%
     select(id, rowid, numero, file_json, justica, tribunal)
@@ -629,8 +630,9 @@ cria_da_incos <- function(lista_bases,session){
     reduce(left_join, by = "id", .init = da_inicial) %>%
     filter_at(vars(starts_with("inc_")), any_vars(!is.na(.))) %>%
     left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
-    left_join(tab_classe_assunto, by = c('file_json', 'rowid')) %>%
-    left_join(tab_incos_movs, by = "id")
+    left_join(tab_classe_assunto, by = c('file_json', 'rowid'))
+  # %>%
+  #   left_join(tab_incos_movs, by = "id")
 
   updateProgressBar(session = session,id = "pb_upload",value = 90)
 
