@@ -12,7 +12,7 @@ mod_input_ui <- function(id){
   shiny::tagList(
     bs4Dash::box(inputId = ns('file_upload'),title = 'Upload',width = 12,closable = FALSE,
                  shiny::fileInput(inputId = ns('input_file'),label = 'Faça o upload do(s) seu(s) arquivo(s',
-                                  multiple = TRUE,buttonLabel = 'Upload'),
+                                  multiple = TRUE,buttonLabel = 'Upload',accept = ".json"),
 
                  shinyWidgets::progressBar(id = ns('pb_upload'),
                                            title = 'Estruturando os dados',
@@ -52,16 +52,20 @@ mod_input_server <- function(id, app_data) {
 
     infile <- shiny::eventReactive(input$input_file,{
 
+
       file <- input$input_file
 
       paths <- file$datapath
       names <- file$name
 
-      updateProgressBar(session = session,id = "pb_upload",value = 10)
+      ext <- tools::file_ext(paths)
+      validate(need(ext == "json", "O arquivo deve ser em formato json"))
+
+      shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 10)
 
       parse <- parse_file(infile = paths,names = names)
 
-      updateProgressBar(session = session,id = "pb_upload",value = 25)
+      shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 25)
 
       da_incos <- parse %>%
         cria_da_incos(session)
@@ -71,7 +75,7 @@ mod_input_server <- function(id, app_data) {
       base <- list(da_incos = da_incos,
                    da_totais = da_totais)
 
-      updateProgressBar(session = session,id = "pb_upload",value = 100)
+      shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 100)
 
       return(base)
     })

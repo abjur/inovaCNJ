@@ -40,11 +40,6 @@ app_ui <- function() {
         title = "{cnjInova}",
         bs4Dash::bs4SidebarMenu(
           bs4Dash::bs4SidebarMenuItem(
-            "Inicio",
-            tabName = "menu_input",
-            icon = "upload"
-          ),
-          bs4Dash::bs4SidebarMenuItem(
             "Geral",
             tabName = "menu_geral",
             icon = "bullseye"
@@ -60,6 +55,11 @@ app_ui <- function() {
             icon = "compress-arrows-alt"
           ),
           bs4Dash::bs4SidebarMenuItem(
+            "Validador de arquivos",
+            tabName = "menu_input",
+            icon = "upload"
+          ),
+          bs4Dash::bs4SidebarMenuItem(
             "Feedback",
             tabName = "menu_feedback",
             icon = "comments"
@@ -72,10 +72,6 @@ app_ui <- function() {
         fresh::use_theme(create_theme_css()),
         bs4Dash::bs4TabItems(
           bs4Dash::bs4TabItem(
-            tabName = "menu_input",
-            mod_input_ui("input_ui_1")
-          ),
-          bs4Dash::bs4TabItem(
             tabName = "menu_geral",
             mod_geral_ui("geral_ui_1")
           ),
@@ -86,6 +82,10 @@ app_ui <- function() {
           bs4Dash::bs4TabItem(
             tabName = "menu_verificacao",
             mod_verificacao_ui("verificacao_ui_1")
+          ),
+          bs4Dash::bs4TabItem(
+            tabName = "menu_input",
+            mod_input_ui("input_ui_1")
           ),
           bs4Dash::bs4TabItem(
             tabName = "menu_feedback",
