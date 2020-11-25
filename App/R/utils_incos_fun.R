@@ -392,14 +392,14 @@ inc_mov_responsavel_fun <- function(mov) {
     dplyr::mutate(
       inc_responsavel_mov = dplyr::case_when(
         (tipoResponsavelMovimento == '1' &
-           !(movimentoLocal$codigoPaiNacional %in% c('1', '12524'))) |
+           !(codigoPaiNacional %in% c('1', '12524'))) |
           (tipoResponsavelMovimento == '0' &
-             movimentoLocal$codigoPaiNacional %in% c('1', '12524'))
+             codigoPaiNacional %in% c('1', '12524'))
         ~ 'Movimentação Com Responsável Incorreto'
       ),
       sol_responsavel_mov = dplyr::case_when(
-        movimentoLocal$codigoPaiNacional %in% c('1', '12524') ~ '1',
-        !(movimentoLocal$codigoPaiNacional %in% c('1', '12524')) ~ '0'
+        codigoPaiNacional %in% c('1', '12524') ~ '1',
+        !(codigoPaiNacional %in% c('1', '12524')) ~ '0'
       )
     ) %>%
     dplyr::transmute(
@@ -470,23 +470,23 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
     dplyr::select(
       file_json,
       rowid,
-      movimentoNacional$codigoNacional,
-      movimentoLocal$codigoPaiNacional
+      codigoNacional,
+      codigoPaiNacional
     ) %>%
-    dplyr::filter(is.na(movimentoLocal$codigoPaiNacional)) %>%
+    dplyr::filter(is.na(codigoPaiNacional)) %>%
     dplyr::mutate(
       inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
     ) %>%
     dplyr::left_join(
       dplyr::select(sgt_movs, codigo, cod_pai), by = c(
-        'movimentoNacional.codigoNacional' = 'codigo'
+        'codigoNacional' = 'codigo'
       )
     ) %>%
     dplyr::transmute(
       file_json,
       rowid,
       inc_cod_pai_faltante,
-      info_cod_pai_faltante = movimentoLocal$codigoPaiNacional,
+      info_cod_pai_faltante = codigoPaiNacional,
       sol_cod_pai_faltante = cod_pai
     ) %>%
     dplyr::filter(!is.na(inc_cod_pai_faltante))

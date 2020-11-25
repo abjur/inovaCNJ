@@ -192,6 +192,9 @@ mod_incos_server <- function(id, app_data) {
 
       # label
       output[[paste0(nm[.x], "_lab")]] <- shiny::renderText({
+        shiny::validate(shiny::need(!is.null(app_data()$incos[[paste0("inc_", nm[.x])]]),
+                                    "Inconsistência indisponível"))
+
         n <- app_data()$incos %>%
           dplyr::filter(!vazio(.data[[paste0("inc_", nm[.x])]])) %>%
           nrow()
@@ -272,8 +275,6 @@ mod_incos_server <- function(id, app_data) {
             tidyr::unnest(where(is.list))
 
           if (all(names(da_incos_filter) %in% names(da)) && nrow(da_incos_filter) == nrow(da)) {
-
-
 
             try({
 

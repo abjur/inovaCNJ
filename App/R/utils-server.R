@@ -59,34 +59,59 @@ parse_file <- function(infile,names){
     ler_basic(data$path)
   })
 
-  # Andre mexer aqui --------------------------------------------------------
-  fun <- function(x){
-    if(!is.null(x)){
-      cols <- c('identificadorMovimento',
-                'tipoResponsavelMovimento',
-                'dataHora',
-                'movimentoNacional',
-                'orgaoJulgador',
-                'tipoDecisao',
-                'nivelSigilo',
-                'idDocumentoVinculado',
-                'movimentoLocal'
-      )
-      t<- x %>%
-        dplyr::select(dplyr::contains(cols)) %>%
-        dplyr::select(where(~naniar::pct_miss(.x) != 100)) %>% #se nao fizer isso, as listcoluns que tem soh NA viram character e o unnest nao funciona
-        dplyr::mutate(across(where(function(x){!is.list(x)}),as.character))
-    } else{
-      t<- NULL
-    }
-    return(t)
-  }
-
-  da_movs <- da_basic
-  # %>%
+  # # Andre mexer aqui --------------------------------------------------------
+  # fun <- function(x){
+  #   if(!is.null(x)){
+  #     cols <- c('identificadorMovimento',
+  #               'tipoResponsavelMovimento',
+  #               'dataHora',
+  #               'movimentoNacional',
+  #               'orgaoJulgador',
+  #               'tipoDecisao',
+  #               'nivelSigilo',
+  #               'idDocumentoVinculado',
+  #               'movimentoLocal'
+  #     )
+  #     t<- x %>%
+  #       dplyr::select(dplyr::contains(cols)) %>%
+  #       dplyr::select(where(~naniar::pct_miss(.x) != 100)) %>% #se nao fizer isso, as listcoluns que tem soh NA viram character e o unnest nao funciona
+  #       dplyr::mutate(across(where(function(x){!is.list(x)}),as.character))
+  #   } else{
+  #     t<- NULL
+  #   }
+  #   return(t)
+  # }
+  #
+  # oplan <- future::plan('multisession')
+  # on.exit(plan(oplan),add = TRUE)
+  #
+  # da_movs_ <- da_basic %>%
   #   dplyr::select(file_json,rowid,movimento) %>%
-  #   dplyr::mutate(movimento = purrr::map(movimento,fun)) %>%
+  #   dplyr::mutate(movimento = furrr::future_map(movimento,fun,.progress = TRUE)) %>%
   #   tidyr::unnest(movimento)
+  #
+  # da_movs <- da_movs_ %>% {
+  #     if("movimentoNacional" %in% names(.)){
+  #       dplyr::select(.,-movimentoNacional) %>%
+  #         dplyr::bind_cols(da_movs_$movimentoNacional)
+  #     } else {
+  #       .
+  #     }
+  #   } %>% {
+  #     if("orgaoJulgador" %in% names(.)){
+  #       dplyr::select(.,-orgaoJulgador) %>%
+  #         dplyr::bind_cols(da_movs_$orgaoJulgador)
+  #     } else {
+  #       .
+  #     }
+  #   } %>% {
+  #     if("movimentoLocal" %in% names(.)){
+  #       dplyr::select(.,-movimentoLocal) %>%
+  #         dplyr::bind_cols(da_movs_$movimentoLocal)
+  #     } else {
+  #       .
+  #     }
+  #   }
 
   # -------------------------------------------------------------------------
 
@@ -135,7 +160,7 @@ cria_da_incos <- function(lista_bases,session){
   # lista_bases <- parse_file(infile = infile,names = str_extract(infile,'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
-  mov <- lista_bases$movs
+  # mov <- lista_bases$movs
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 50)
 
