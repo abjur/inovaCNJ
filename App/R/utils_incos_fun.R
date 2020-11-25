@@ -388,6 +388,7 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
 inc_mov_responsavel_fun <- function(mov) {
   message('responsável movimentação')
 
+  if("codigoPaiNacional" %in% names(mov) & "tipoResponsavelMovimento" %in% names(mov)){
   r<- mov %>%
     dplyr::mutate(
       inc_responsavel_mov = dplyr::case_when(
@@ -406,10 +407,18 @@ inc_mov_responsavel_fun <- function(mov) {
       file_json,
       rowid,
       inc_responsavel_mov,
-      info_responsavel_mov = tipoResponsavelMovimento,
+      info_responsavel_mov = as.character(tipoResponsavelMovimento),
       sol_responsavel_mov
     ) %>%
     dplyr::filter(!is.na(inc_responsavel_mov))
+  } else{
+    r <- mov %>%
+      dplyr::transmute(file_json,
+                       rowid,
+                       inc_responsavel_mov = NA_character_,
+                       info_responsavel_mov = NA_character_,
+                       sol_responsavel_mov = NA_character_)
+  }
 
   return(r)
 }
@@ -422,6 +431,7 @@ inc_mov_responsavel_fun <- function(mov) {
 inc_mov_demorada_fun <- function(mov) {
   message('movimentação muito demorada')
 
+  if("dataHora" %in% names(mov)){
   r<- mov %>%
     dplyr::mutate(
       data = dataHora,
@@ -446,6 +456,15 @@ inc_mov_demorada_fun <- function(mov) {
       info_mov_demorada = dataHora,
     ) %>%
     dplyr::filter(!is.na(inc_mov_demorada))
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json,
+        rowid,
+        inc_mov_demorada = NA_character_,
+        info_mov_demorada = NA_character_,
+      )
+  }
 
   return(r)
 }
@@ -460,12 +479,12 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
 
   sgt_movs <-sgt_movs %>%
     dplyr::transmute(
-      codigo,
+      codigo = as.integer(codigo),
       dscr = stringr::str_squish(descricao),
-      cod_pai = str_replace(cod_pai, '(\\.0)$', ''),
+      cod_pai = stringr::str_replace(cod_pai, '(\\.0)$', ''),
       cod_filhos
     )
-
+  if("codigoPaiNacional" %in% names(mov) & "codigoNacional" %in% names(mov)){
   r<- mov %>%
     dplyr::select(
       file_json,
@@ -478,18 +497,27 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
       inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
     ) %>%
     dplyr::left_join(
-      dplyr::select(sgt_movs, codigo, cod_pai), by = c(
-        'codigoNacional' = 'codigo'
-      )
+      dplyr::select(sgt_movs, codigo, cod_pai), by = c('codigoNacional' = 'codigo')
     ) %>%
     dplyr::transmute(
       file_json,
       rowid,
       inc_cod_pai_faltante,
-      info_cod_pai_faltante = codigoPaiNacional,
+      info_cod_pai_faltante = as.character(codigoPaiNacional),
       sol_cod_pai_faltante = cod_pai
     ) %>%
     dplyr::filter(!is.na(inc_cod_pai_faltante))
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json,
+        rowid,
+        inc_cod_pai_faltante = NA_character_,
+        info_cod_pai_faltante = NA_character_,
+        sol_cod_pai_faltante = NA_character_
+      )
+
+  }
 
   return(r)
 }
@@ -502,6 +530,7 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
 inc_mov_processo_longo_fun <- function(mov){
   message('processos longos')
 
+  if("dataHora" %in% names(mov)){
   r<- mov %>%
     dplyr::mutate(
       data = dataHora,
@@ -511,7 +540,7 @@ inc_mov_processo_longo_fun <- function(mov){
     dplyr::group_by(file_json, rowid) %>%
     dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
     dplyr::select(file_json, rowid, data, dataHora) %>%
-    dplyr::mutate(processo_longo = as.numeric(first(data) - dplyr::last(data))) %>%
+    dplyr::mutate(processo_longo = as.numeric(dplyr::first(data) - dplyr::last(data))) %>%
     dplyr::ungroup() %>%
     dplyr::select(-data) %>%
     dplyr::distinct_at(dplyr::vars(-dataHora), .keep_all = TRUE) %>%
@@ -524,9 +553,17 @@ inc_mov_processo_longo_fun <- function(mov){
     dplyr::transmute(
       file_json, rowid,
       inc_processo_longo,
-      info_processo_longo = dataHora,
+      info_processo_longo = dataHora
     ) %>%
     dplyr::filter(!is.na(inc_processo_longo))
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_processo_longo = NA_character_,
+        info_processo_longo = NA_character_
+      )
+  }
 
   return(r)
 }

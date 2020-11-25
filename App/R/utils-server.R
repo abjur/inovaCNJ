@@ -59,61 +59,37 @@ parse_file <- function(infile,names){
     ler_basic(data$path)
   })
 
-  # # Andre mexer aqui --------------------------------------------------------
-  # fun <- function(x){
-  #   if(!is.null(x)){
-  #     cols <- c('identificadorMovimento',
-  #               'tipoResponsavelMovimento',
-  #               'dataHora',
-  #               'movimentoNacional',
-  #               'orgaoJulgador',
-  #               'tipoDecisao',
-  #               'nivelSigilo',
-  #               'idDocumentoVinculado',
-  #               'movimentoLocal'
-  #     )
-  #     t<- x %>%
-  #       dplyr::select(dplyr::contains(cols)) %>%
-  #       dplyr::select(where(~naniar::pct_miss(.x) != 100)) %>% #se nao fizer isso, as listcoluns que tem soh NA viram character e o unnest nao funciona
-  #       dplyr::mutate(across(where(function(x){!is.list(x)}),as.character))
-  #   } else{
-  #     t<- NULL
-  #   }
-  #   return(t)
-  # }
-  #
-  # oplan <- future::plan('multisession')
-  # on.exit(plan(oplan),add = TRUE)
-  #
-  # da_movs_ <- da_basic %>%
-  #   dplyr::select(file_json,rowid,movimento) %>%
-  #   dplyr::mutate(movimento = furrr::future_map(movimento,fun,.progress = TRUE)) %>%
-  #   tidyr::unnest(movimento)
-  #
-  # da_movs <- da_movs_ %>% {
-  #     if("movimentoNacional" %in% names(.)){
-  #       dplyr::select(.,-movimentoNacional) %>%
-  #         dplyr::bind_cols(da_movs_$movimentoNacional)
-  #     } else {
-  #       .
-  #     }
-  #   } %>% {
-  #     if("orgaoJulgador" %in% names(.)){
-  #       dplyr::select(.,-orgaoJulgador) %>%
-  #         dplyr::bind_cols(da_movs_$orgaoJulgador)
-  #     } else {
-  #       .
-  #     }
-  #   } %>% {
-  #     if("movimentoLocal" %in% names(.)){
-  #       dplyr::select(.,-movimentoLocal) %>%
-  #         dplyr::bind_cols(da_movs_$movimentoLocal)
-  #     } else {
-  #       .
-  #     }
-  #   }
+  parse_mv <- function(mv) {
+    if (!is.null(mv)) {
+      colunas <- c("tipoResponsavelMovimento", "complementoNacional",
+                   "idDocumentoVinculado", "nivelSigilo", "dataHora", "tipoDecisao")
+      nm <- colunas[colunas %in% names(mv)]
+      dplyr::bind_cols(
+        mv[,nm],
+        mv[["movimentoLocal"]],
+        mv[["movimentoNacional"]],
+        mv[["orgaoJulgador"]],
+        .name_repair = "minimal"
+      )
+    }
+  }
 
-  # -------------------------------------------------------------------------
+  movs_fast <- function(da_basic) {
+    da_basic <- da_basic %>%
+      dplyr::mutate(id = paste0(file_json,"_rowid_",rowid))
+
+    movs <- purrr::set_names(da_basic$movimento, da_basic$id)
+    l_res <- purrr::map(movs, parse_mv) %>%
+      data.table::rbindlist(fill = TRUE, idcol = "id") %>%
+      tibble::as_tibble() %>%
+      dplyr::mutate(file_json = stringr::str_extract(id,'.*json'),
+                    rowid = stringr::str_extract(id,'[0-9]*$')) %>%
+      dplyr::select(-id) %>%
+      dplyr::select(file_json,rowid, dplyr::everything())
+    l_res
+  }
+
+  da_movs <- movs_fast(da_basic)
 
   da_basic_assuntos <- da_basic %>%
     dplyr::select(file_json, rowid, assunto) %>%
@@ -160,7 +136,7 @@ cria_da_incos <- function(lista_bases,session){
   # lista_bases <- parse_file(infile = infile,names = str_extract(infile,'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
-  # mov <- lista_bases$movs
+  mov <- lista_bases$movs
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 50)
 
@@ -182,18 +158,19 @@ cria_da_incos <- function(lista_bases,session){
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 85)
 
-  # tab_incos_movs <- inc_funcs[stringr::str_detect(inc_funcs, "^inc_mov")] %>%
-  #   purrr::set_names() %>%
-  #   purrr::map(~get(.x)(mov)) %>%
-  #   purrr::imap(~{
-  #     .x %>%
-  #       dplyr::group_by(id) %>%
-  #       tidyr::nest() %>%
-  #       dplyr::ungroup() %>%
-  #       purrr::set_names(c("id", .y))
-  #   }) %>%
-  #   purrr::reduce(dplyr::left_join, by = "id", .init = dplyr::distinct(mov, id)) %>%
-  #   dplyr::mutate(id = as.integer(id))
+
+  tab_incos_movs <- inc_funcs[stringr::str_detect(inc_funcs, "^inc_mov")] %>%
+    purrr::set_names() %>%
+    purrr::map(~get(.x)(mov)) %>%
+    purrr::imap(~{
+      .x %>%
+        dplyr::group_by(file_json,rowid) %>%
+        tidyr::nest() %>%
+        dplyr::ungroup() %>%
+        purrr::set_names(c("file_json","rowid", .y))
+    }) %>%
+    purrr::reduce(dplyr::left_join, by = c("file_json",'rowid'), .init = dplyr::distinct(mov, file_json,rowid)) %>%
+    dplyr::mutate(rowid = as.integer(rowid))
 
   da_inicial <- da_basic_transform %>%
     dplyr::select(id, rowid, numero, file_json, justica, tribunal)
@@ -202,9 +179,9 @@ cria_da_incos <- function(lista_bases,session){
     purrr::reduce(dplyr::left_join, by = "id", .init = da_inicial) %>%
     dplyr::filter_at(dplyr::vars(dplyr::starts_with("inc_")), dplyr::any_vars(!is.na(.))) %>%
     dplyr::left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
-    dplyr::left_join(tab_classe_assunto, by = c('file_json', 'rowid'))
-  # %>%
-  #   dplyr::left_join(tab_incos_movs, by = "id")
+    dplyr::left_join(tab_classe_assunto, by = c('file_json', 'rowid')) %>%
+    dplyr::left_join(tab_incos_movs, by = c('file_json', 'rowid')) %>%
+    dplyr::distinct()
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 95)
 
