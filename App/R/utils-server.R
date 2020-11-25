@@ -6,8 +6,8 @@
 #'
 #' @export
 parse_file <- function(infile,names){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[385:386]
-  # names = str_extract(infile,'processos.[^/]*json$')
+  infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[450:453]
+  names = str_extract(infile,'processos.[^/]*json$')
 
   aux_files <- infile %>%
     tibble::enframe() %>%
@@ -19,7 +19,7 @@ parse_file <- function(infile,names){
                                  stringr::str_detect(names,'trt') ~ 'trabalho',
                                  stringr::str_detect(names,'stm') ~ 'militar',
                                  stringr::str_detect(names,'tst|stj|stf') ~ 'superior'),
-      tribunal = stringr::str_extract(names, "(?<=processos-)[^/]+(?=_[0-9]\\.json)")
+      tribunal = stringr::str_extract(names, "(?<=processos-)[^/]+(?=_[0-9]+\\.json)")
     )
   # print('parte1 sucesso')
 
@@ -61,7 +61,7 @@ parse_file <- function(infile,names){
 
   parse_mv <- function(mv) {
     if (!is.null(mv)) {
-      colunas <- c("tipoResponsavelMovimento", "complementoNacional",
+      colunas <- c("identificadorMovimento","tipoResponsavelMovimento", "complementoNacional",
                    "idDocumentoVinculado", "nivelSigilo", "dataHora", "tipoDecisao")
       nm <- colunas[colunas %in% names(mv)]
       dplyr::bind_cols(
@@ -76,9 +76,12 @@ parse_file <- function(infile,names){
 
   movs_fast <- function(da_basic) {
     da_basic <- da_basic %>%
-      dplyr::mutate(id = paste0(file_json,"_rowid_",rowid))
+      dplyr::mutate(id = paste0(file_json,"_rowid_",rowid),
+                    rowid = as.character(rowid))
 
+    if("movimento" %in% names(da_basic)){
     movs <- purrr::set_names(da_basic$movimento, da_basic$id)
+
     l_res <- purrr::map(movs, parse_mv) %>%
       data.table::rbindlist(fill = TRUE, idcol = "id") %>%
       tibble::as_tibble() %>%
@@ -86,7 +89,11 @@ parse_file <- function(infile,names){
                     rowid = stringr::str_extract(id,'[0-9]*$')) %>%
       dplyr::select(-id) %>%
       dplyr::select(file_json,rowid, dplyr::everything())
-    l_res
+    } else{
+      l_res <- dplyr::select(da_basic,file_json,rowid)
+    }
+
+    return(l_res)
   }
 
   da_movs <- movs_fast(da_basic)
