@@ -20,8 +20,16 @@ mod_input_ui <- function(id){
                                            total = 100,
                                            display_pct = TRUE)),
 
-    bs4Dash::box(inputId = ns('tabela'),title = 'tabela upload',width = 12,closable = FALSE,
-                 reactable::reactableOutput(outputId = ns('input_table')))
+    bs4Dash::box(inputId = ns('tabpanels'),title = 'Validação',width = 12,closable = FALSE,
+      bs4Dash::bs4TabSetPanel(id = ns('tabpanel'),side = 'left',
+                              bs4Dash::tabPanel(tabName = "Base estruturada",active = TRUE,
+                                                reactable::reactableOutput(outputId = ns('input_table'))),
+                              bs4Dash::tabPanel(tabName = "Inconsistências",active = FALSE,
+                                                shiny::uiOutput(ns('inc_valid')))
+
+
+      )
+    )
   )
 
 }
@@ -46,7 +54,7 @@ cria_tabela_json <- function(infile){
 #' input Server Functions
 #'
 #' @noRd
-mod_input_server <- function(id, app_data) {
+mod_input_server <- function(id) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
 
@@ -72,8 +80,8 @@ mod_input_server <- function(id, app_data) {
 
       da_totais <- cria_da_totais(lista_bases = parse,da_incos = da_incos)
 
-      base <- list(da_incos = da_incos,
-                   da_totais = da_totais)
+      base <- list(incos = da_incos,
+                   totais = da_totais)
 
       shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 100)
 
@@ -82,13 +90,19 @@ mod_input_server <- function(id, app_data) {
 
     output$input_table <- reactable::renderReactable({
       reactable::reactable(
-        infile()$da_incos
+        infile()$incos %>%
+          dplyr::select(-id,-rowid,-file_json,
+                        -dplyr::starts_with("inc_"),
+                        -dplyr::starts_with("info_"),
+                        -dplyr::starts_with("sol_"))
       )
     })
 
+    output$inc_valid <- shiny::renderUI({
+      mod_incos_ui(ns("incos_ui_2"))
+    })
 
-    return(infile)
-
+    mod_incos_server(id = 'incos_ui_2',app_data = infile)
 
   })
 }

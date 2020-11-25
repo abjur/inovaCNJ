@@ -6,8 +6,8 @@
 #'
 #' @export
 parse_file <- function(infile,names){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[1:3]
-  # names = str_extract(infile[1:3],'processos.[^/]*json$')
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[385:386]
+  # names = str_extract(infile,'processos.[^/]*json$')
 
   aux_files <- infile %>%
     tibble::enframe() %>%
@@ -35,7 +35,7 @@ parse_file <- function(infile,names){
       tibble::as_tibble() %>%
       tidyr::chop(orgaoJulgador) %>%
       tidyr::unnest(orgaoJulgador) %>%
-      dplyr::bind_cols(dplyr::select(da,movimento),
+      dplyr::bind_cols(dplyr::select(da,dplyr::contains('movimento')),
                        dplyr::select(da, where(~!is.list(.x)))) %>%
       janitor::clean_names() %>%
       dplyr::mutate(dplyr::across(c(where(~!is.list(.x))), .fns = as.character)) %>%
@@ -60,10 +60,33 @@ parse_file <- function(infile,names){
   })
 
   # Andre mexer aqui --------------------------------------------------------
+  fun <- function(x){
+    if(!is.null(x)){
+      cols <- c('identificadorMovimento',
+                'tipoResponsavelMovimento',
+                'dataHora',
+                'movimentoNacional',
+                'orgaoJulgador',
+                'tipoDecisao',
+                'nivelSigilo',
+                'idDocumentoVinculado',
+                'movimentoLocal'
+      )
+      t<- x %>%
+        dplyr::select(dplyr::contains(cols)) %>%
+        dplyr::select(where(~naniar::pct_miss(.x) != 100)) %>% #se nao fizer isso, as listcoluns que tem soh NA viram character e o unnest nao funciona
+        dplyr::mutate(across(where(function(x){!is.list(x)}),as.character))
+    } else{
+      t<- NULL
+    }
+    return(t)
+  }
 
-  da_movs <- da_basic %>%
-    dplyr::select(file_json,rowid,movimento) %>%
-    tidyr::unnest(movimento)
+  da_movs <- da_basic
+  # %>%
+  #   dplyr::select(file_json,rowid,movimento) %>%
+  #   dplyr::mutate(movimento = purrr::map(movimento,fun)) %>%
+  #   tidyr::unnest(movimento)
 
   # -------------------------------------------------------------------------
 
@@ -108,13 +131,13 @@ parse_file <- function(infile,names){
 #'
 #' @export
 cria_da_incos <- function(lista_bases,session){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[79:81]
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[385:386]
   # lista_bases <- parse_file(infile = infile,names = str_extract(infile,'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
   mov <- lista_bases$movs
 
-  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 30)
+  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 50)
 
   # export ------------------------------------------------------------------
 
@@ -123,7 +146,7 @@ cria_da_incos <- function(lista_bases,session){
   list_incos <- inc_funcs[stringr::str_detect(inc_funcs, "^inc_") & !stringr::str_detect(inc_funcs, 'assunto|mov')] %>%
     purrr::map(~get(.x)(da_basic_transform))
 
-  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 40)
+  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 70)
 
 
   tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assuntos)
@@ -132,7 +155,7 @@ cria_da_incos <- function(lista_bases,session){
     da_basic = da_basic_transform,
     sgt_assunto = sgt_assuntos)
 
-  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 60)
+  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 85)
 
   # tab_incos_movs <- inc_funcs[stringr::str_detect(inc_funcs, "^inc_mov")] %>%
   #   purrr::set_names() %>%
@@ -158,7 +181,7 @@ cria_da_incos <- function(lista_bases,session){
   # %>%
   #   dplyr::left_join(tab_incos_movs, by = "id")
 
-  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 90)
+  shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 95)
 
   return(da_incos)
 }

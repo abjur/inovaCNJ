@@ -392,18 +392,19 @@ inc_mov_responsavel_fun <- function(mov) {
     dplyr::mutate(
       inc_responsavel_mov = dplyr::case_when(
         (tipoResponsavelMovimento == '1' &
-           !(movimentoLocal.codigoPaiNacional %in% c('1', '12524'))) |
+           !(movimentoLocal$codigoPaiNacional %in% c('1', '12524'))) |
           (tipoResponsavelMovimento == '0' &
-             movimentoLocal.codigoPaiNacional %in% c('1', '12524'))
+             movimentoLocal$codigoPaiNacional %in% c('1', '12524'))
         ~ 'Movimentação Com Responsável Incorreto'
       ),
       sol_responsavel_mov = dplyr::case_when(
-        movimentoLocal.codigoPaiNacional %in% c('1', '12524') ~ '1',
-        !(movimentoLocal.codigoPaiNacional %in% c('1', '12524')) ~ '0'
+        movimentoLocal$codigoPaiNacional %in% c('1', '12524') ~ '1',
+        !(movimentoLocal$codigoPaiNacional %in% c('1', '12524')) ~ '0'
       )
     ) %>%
     dplyr::transmute(
-      id,
+      file_json,
+      rowid,
       inc_responsavel_mov,
       info_responsavel_mov = tipoResponsavelMovimento,
       sol_responsavel_mov
@@ -429,8 +430,8 @@ inc_mov_demorada_fun <- function(mov) {
     ) %>%
     dplyr::group_by(file_json, rowid) %>%
     dplyr::arrange(file_json, rowid, desc(data)) %>%
-    dplyr::select(id, data, dataHora, file_json, rowid) %>%
-    dplyr::mutate(movimentacao_demorada = -1*as.numeric(lead(data) - data)) %>%
+    dplyr::select(file_json, rowid, data, dataHora) %>%
+    dplyr::mutate(movimentacao_demorada = -1*as.numeric(dplyr::lead(data) - data)) %>%
     dplyr::mutate(
       inc_mov_demorada = dplyr::case_when(
         movimentacao_demorada > 1825 ~
@@ -439,7 +440,8 @@ inc_mov_demorada_fun <- function(mov) {
     ) %>%
     dplyr::ungroup() %>%
     dplyr::transmute(
-      id,
+      file_json,
+      rowid,
       inc_mov_demorada,
       info_mov_demorada = dataHora,
     ) %>%
@@ -466,9 +468,12 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
 
   r<- mov %>%
     dplyr::select(
-      id, movimentoNacional.codigoNacional, movimentoLocal.codigoPaiNacional
+      file_json,
+      rowid,
+      movimentoNacional$codigoNacional,
+      movimentoLocal$codigoPaiNacional
     ) %>%
-    dplyr::filter(is.na(movimentoLocal.codigoPaiNacional)) %>%
+    dplyr::filter(is.na(movimentoLocal$codigoPaiNacional)) %>%
     dplyr::mutate(
       inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
     ) %>%
@@ -478,9 +483,10 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
       )
     ) %>%
     dplyr::transmute(
-      id,
+      file_json,
+      rowid,
       inc_cod_pai_faltante,
-      info_cod_pai_faltante = movimentoLocal.codigoPaiNacional,
+      info_cod_pai_faltante = movimentoLocal$codigoPaiNacional,
       sol_cod_pai_faltante = cod_pai
     ) %>%
     dplyr::filter(!is.na(inc_cod_pai_faltante))
@@ -503,12 +509,12 @@ inc_mov_processo_longo_fun <- function(mov){
       data = lubridate::ymd(data, quiet = TRUE)
     ) %>%
     dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(file_json, rowid, desc(data)) %>%
-    dplyr::select(id, data, dataHora, file_json, rowid) %>%
-    dplyr::mutate(processo_longo = as.numeric(first(data) - last(data))) %>%
+    dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
+    dplyr::select(file_json, rowid, data, dataHora) %>%
+    dplyr::mutate(processo_longo = as.numeric(first(data) - dplyr::last(data))) %>%
     dplyr::ungroup() %>%
     dplyr::select(-data) %>%
-    dplyr::distinct_at(vars(-dataHora), .keep_all = TRUE) %>%
+    dplyr::distinct_at(dplyr::vars(-dataHora), .keep_all = TRUE) %>%
     dplyr::mutate(
       tempo_corte = quantile(processo_longo, probs = .75, na.rm = TRUE),
       inc_processo_longo = dplyr::case_when(
@@ -516,7 +522,7 @@ inc_mov_processo_longo_fun <- function(mov){
           'Duração do processo é maior do que 75% de todos os processos.'
       )) %>%
     dplyr::transmute(
-      id,
+      file_json, rowid,
       inc_processo_longo,
       info_processo_longo = dataHora,
     ) %>%
@@ -524,5 +530,4 @@ inc_mov_processo_longo_fun <- function(mov){
 
   return(r)
 }
-
 

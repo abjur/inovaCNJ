@@ -32,10 +32,7 @@ app_server <- function( input, output, session ) {
 
   })
 
-  infile <- mod_input_server("input_ui_1")
-
-  #infile()$da_incos e infile()$da_totais
-
+  mod_input_server("input_ui_1")
   mod_geral_server("geral_ui_1", app_data)
   mod_incos_server("incos_ui_1", app_data)
   mod_verificacao_server("verificacao_ui_1")
