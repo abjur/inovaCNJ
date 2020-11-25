@@ -257,9 +257,11 @@ mod_incos_server <- function(id, app_data) {
 
         if (!is.null(path)) {
 
-          idate <- as.numeric(Sys.time())
+          idate <- lubridate::now()
+          id_sub <- as.character(round(as.numeric(idate)*1000))
           da <- readxl::read_excel(path) %>%
             dplyr::mutate(
+              id_sub = id_sub,
               user = usuario,
               input_date = idate
             )
@@ -285,6 +287,7 @@ mod_incos_server <- function(id, app_data) {
               RPostgres::dbWriteTable(con, nm[.x], da, append = TRUE)
 
               da_sugestao <- tibble::tibble(
+                id_sub = id_sub,
                 user = usuario,
                 input_date = idate,
                 inconsistencia = nm[.x]
