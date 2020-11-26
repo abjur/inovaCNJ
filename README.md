@@ -58,7 +58,7 @@ O menu principal contém 4 (quatro) cards e 1 (um) gráfico e 1 (uma) tabela, de
 
 -   **Card 1 (ranking)**. Mostra a posição do tribunal com relação aos demais tribunais da mesma justiça.
 
--   **Card 2** (**índice de qualidade):** Número entre 1 e 100 que indica o grau de qualidade dos dados. Quanto maior o número, melhor é a qualidade. Este índice é calculado a partir da quantidade média de processos com inconsistência no tribunal.
+-   **Card 2** (**índice de qualidade):** Número entre 0 e 100 que indica o grau de qualidade dos dados. Quanto maior o número, melhor é a qualidade. Este índice é calculado a partir da quantidade média de processos com inconsistência no tribunal.
 
 -   **Card 3 (processos com inconsistências)**: Quantidade de processos com alguma inconsistência, baseado na amostra observada para o tribunal.
 
