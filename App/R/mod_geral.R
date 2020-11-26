@@ -106,7 +106,11 @@ mod_geral_server <- function(id, app_data) {
     output$tabela <- reactable::renderReactable({
       app_data()$incos %>%
         dplyr::select(dplyr::starts_with("inc")) %>%
-        dplyr::summarise(dplyr::across(.fns = ~sum(!is.na(.x)))) %>%
+        dplyr::summarise(
+          dplyr::across(where(is.character), .fns = ~sum(!is.na(.x))),
+          dplyr::across(where(is.list), .fns = ~sum(!purrr::map_lgl(.x, is.null))),
+          .groups = "drop"
+        ) %>%
         tidyr::pivot_longer(dplyr::everything()) %>%
         dplyr::arrange(dplyr::desc(value)) %>%
         dplyr::mutate(
