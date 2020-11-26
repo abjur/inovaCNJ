@@ -112,3 +112,11 @@ Essa aba pode ser utilizada para verificar as inconsistências de um arquivo .js
 # Vídeo
 
 O vídeo de demonstração pode ser acessado [nesse link](https://youtu.be/UP3g0bb0BWM).
+
+# Apresentação
+
+[Link para apresentação (PDF)](misc/cnj_inova.pdf)
+
+# Licença
+
+MIT
