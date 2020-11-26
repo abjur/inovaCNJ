@@ -79,7 +79,7 @@ mod_input_server <- function(id) {
 
     base_arrumada <- shiny::reactive({
 
-      browser()
+      # browser()
 
       da_sugestoes <- infile()$incos %>%
         dplyr::select(id, dplyr::starts_with("sol_")) %>%
@@ -93,17 +93,17 @@ mod_input_server <- function(id) {
         dplyr::select(
           -dplyr::starts_with("inc_"),
           -dplyr::starts_with("sol_")
-        )
+        ) %>%
+        dplyr::distinct(id, .keep_all = TRUE)
 
       dados_para_arrumar <- todos_dados %>%
-        dplyr::distinct(id, .keep_all = TRUE) %>%
         dplyr::semi_join(da_sugestoes, "id")
 
       dados_arrumados <- purrr::reduce(
         names(da_sugestoes)[-1],
         corrigir_coluna,
         da_sugestoes,
-        .init = dados_para_arrumar
+        .init = todos_dados
       )
 
       dados_arrumados

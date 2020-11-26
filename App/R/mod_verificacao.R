@@ -182,14 +182,14 @@ mod_verificacao_server <- function(id, app_data){
           dplyr::distinct(id, .keep_all = TRUE)
       }
 
-      todos_dados <- inovaCNJ::da_incos %>%
+      todos_dados <- app_data()$incos %>%
         dplyr::select(
           -dplyr::starts_with("inc_"),
           -dplyr::starts_with("sol_")
-        )
+        ) %>%
+        dplyr::distinct(id, .keep_all = TRUE)
 
       dados_para_arrumar <- todos_dados %>%
-        dplyr::distinct(id, .keep_all = TRUE) %>%
         dplyr::semi_join(da_sugestoes, "id")
 
       dados_arrumados <- purrr::reduce(
@@ -292,7 +292,7 @@ corrigir_coluna <- function(arrumar, nm, arrumado) {
   arrumado <- dplyr::select(arrumado, dplyr::all_of(c("id", nm)))
 
   arrumar %>%
-    dplyr::inner_join(arrumado, "id") %>%
+    dplyr::left_join(arrumado, "id") %>%
     dplyr::mutate({{nm_arrumar}} := dplyr::coalesce({{nm}}, {{nm_arrumar}})) %>%
     dplyr::select(-dplyr::all_of(nm))
 
