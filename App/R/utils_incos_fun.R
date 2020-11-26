@@ -2,6 +2,8 @@
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_numero_justica_tribunal_fun <- function(da) {
   message("justica")
@@ -50,13 +52,15 @@ inc_numero_justica_tribunal_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 #'
 inc_classe_fun <- function(da) {
 
   message("classe")
 
-  classe_sgt <- sgt_classes %>%
+  classe_sgt <- inovaCNJ::sgt_classes %>%
     dplyr::distinct(codigo) %>%
     dplyr::filter(!is.na(codigo))
 
@@ -79,6 +83,8 @@ inc_classe_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @param num numero do processo
+#'
 #' @export
 calc_dig <- function(num) {
   NNNNNNN <- substr(num, 1L, 7L)
@@ -93,6 +99,10 @@ calc_dig <- function(num) {
 #' inc_digito_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @name incos
+#'
+#' @param da base de dados
 #'
 #' @export
 inc_digito_fun <- function(da) {
@@ -123,6 +133,8 @@ inc_digito_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_data_ajuizamento_fun <- function(da) {
   message("data de ajuizamento")
@@ -150,6 +162,8 @@ inc_data_ajuizamento_fun <- function(da) {
 #' inc_sistema_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_sistema_fun <- function(da) {
@@ -187,6 +201,8 @@ inc_sistema_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_proc_el_fun <- function(da) {
   message("eletronico")
@@ -215,13 +231,15 @@ inc_proc_el_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_valor_fun <- function(da) {
   message("valor")
   if('valor_causa' %in% names(da)){
     r<- da %>%
       dplyr::group_by(justica, tribunal) %>%
-      dplyr::mutate(valor_corte = quantile(valor_causa, probs = .99, na.rm = TRUE)) %>%
+      dplyr::mutate(valor_corte = stats::quantile(valor_causa, probs = .99, na.rm = TRUE)) %>%
       dplyr::ungroup() %>%
       dplyr::mutate(inc_valor = dplyr::case_when(
         valor_causa < 0 ~ "Valor da causa menor que zero",
@@ -248,6 +266,8 @@ inc_valor_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_orgao_fun <- function(da) {
 
@@ -270,6 +290,8 @@ inc_orgao_fun <- function(da) {
 #' inc_municipio_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_municipio_fun <- function(da) {
@@ -303,6 +325,8 @@ inc_municipio_fun <- function(da) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_assuntos_fun <- function(da_assunto,sgt_assunto){
 
@@ -332,7 +356,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
     dplyr::group_by(file_json,rowid) %>%
     dplyr::summarise(
 
-      info_assunto = paste0(na.exclude(info_assunto),collapse = ', '),
+      info_assunto = paste0(stats::na.exclude(info_assunto),collapse = ', '),
 
       # nao eh assunto principal
       inc_principal = ifelse(info_assunto == '', '',min(inc_nao_e_assunto_principal)),
@@ -361,6 +385,12 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
+#' @param da_assunto base de assuntos
+#' @param da_basic base de dados basicos
+#' @param sgt_assunto assuntos oficiais CNJ
+#'
 #' @export
 inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
   r<- da_assunto %>% {
@@ -377,7 +407,7 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
     dplyr::group_by(classe_processual,codigo) %>%
     dplyr::mutate(n = dplyr::n()) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(inc_classe_assunto_raro = ifelse(n <= quantile(n,0.05),'Combinação rara de classe e assunto','')) %>%
+    dplyr::mutate(inc_classe_assunto_raro = ifelse(n <= stats::quantile(n,0.05),'Combinação rara de classe e assunto','')) %>%
     dplyr::filter(inc_classe_assunto_raro != "") %>%
     dplyr::select(
       file_json,
@@ -394,6 +424,8 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
 #' inc_mov_responsavel_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_mov_responsavel_fun <- function(mov) {
@@ -438,6 +470,8 @@ inc_mov_responsavel_fun <- function(mov) {
 #' inc_mov_demorada_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_mov_demorada_fun <- function(mov) {
@@ -485,6 +519,8 @@ inc_mov_demorada_fun <- function(mov) {
 #' inc_mov_cod_pai_faltante_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_mov_cod_pai_faltante_fun <- function (mov) {
@@ -540,6 +576,8 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
 #'
+#' @rdname incos
+#'
 #' @export
 inc_mov_processo_longo_fun <- function(mov){
   message('processos longos')
@@ -559,7 +597,7 @@ inc_mov_processo_longo_fun <- function(mov){
       dplyr::select(-data) %>%
       dplyr::distinct_at(dplyr::vars(-dataHora), .keep_all = TRUE) %>%
       dplyr::mutate(
-        tempo_corte = quantile(processo_longo, probs = .75, na.rm = TRUE),
+        tempo_corte = stats::quantile(processo_longo, probs = .75, na.rm = TRUE),
         inc_processo_longo = dplyr::case_when(
           processo_longo > tempo_corte ~
             'Duração do processo é maior do que 75% de todos os processos.'
@@ -586,6 +624,8 @@ inc_mov_processo_longo_fun <- function(mov){
 #' inc_id_mov_segue_ordem_cronologica_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
@@ -656,6 +696,10 @@ inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
 #' inc_mov_relevante_ordenada_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
+#'
+#' @param mov movimentacao
 #'
 #' @export
 inc_mov_relevante_ordenada_fun <- function(mov){
@@ -753,6 +797,8 @@ inc_mov_relevante_ordenada_fun <- function(mov){
 #' inc_mov_relevante_faltante_fun
 #'
 #' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @rdname incos
 #'
 #' @export
 inc_mov_relevante_faltante_fun <- function(mov){

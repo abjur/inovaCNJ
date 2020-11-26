@@ -100,11 +100,12 @@ incos_mapeadas <- function() {
 #' @description A shiny Module.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
+#' @param mostrar mostrar botoes de upload
 #'
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_incos_ui <- function(id){
+mod_incos_ui <- function(id, mostrar){
   ns <- shiny::NS(id)
 
 
@@ -132,21 +133,25 @@ mod_incos_ui <- function(id){
               reactable::reactableOutput(ns(paste0(.y, "_tab")))
             )
           ),
-          shiny::fluidRow(
-            shiny::fileInput(
-              ns(paste0(.y, "_up")), "Upload de base arrumada",
-              accept = ".xlsx"
+          if (mostrar) {
+            shiny::tagList(
+              shiny::fluidRow(
+                shiny::fileInput(
+                  ns(paste0(.y, "_up")), "Upload de base arrumada",
+                  accept = ".xlsx"
+                )
+              ),
+              shiny::fluidRow(
+                shiny::column(
+                  width = 12,
+                  reactable::reactableOutput(ns(paste0(.y, "_tabview")))
+                )
+              ),
+              shiny::fluidRow(
+                shiny::actionButton(ns(paste0(.y, "_btn")), "Submeter")
+              )
             )
-          ),
-          shiny::fluidRow(
-            shiny::column(
-              width = 12,
-              reactable::reactableOutput(ns(paste0(.y, "_tabview")))
-            )
-          ),
-          shiny::fluidRow(
-            shiny::actionButton(ns(paste0(.y, "_btn")), "Submeter")
-          )
+          }
         )),
         ns = ns
       )

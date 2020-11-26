@@ -1,6 +1,6 @@
 Package: inovaCNJ
 Title: Dashboard Para Pesquisas da ABJ
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     c(person('Julio', 'Trecenti', 
              email = 'julio.trecenti@gmail.com', 
@@ -18,7 +18,7 @@ Authors@R:
       person(given = "Associação Brasileira de Jurimetria",
              role = c("cph", "fnd")))
 Description: Possui visualizacoes e analise de inconsistencias dos observatorios da ABJ.
-Depends: R (>= 2.10)
+Depends: R (>= 3.50)
 License: GPL-3
 Imports: 
     config (>= 0.3),
@@ -45,10 +45,18 @@ Imports:
     shinyalert,
     RPostgres,
     tibble,
-    dbplyr
+    dbplyr,
+    data.table,
+    forosCNJ,
+    furrr,
+    janitor,
+    jsonlite,
+    lubridate,
+    readr
 Remotes: 
   ThinkR-open/golem,
-  jtrecenti/bs4Dash
+  jtrecenti/bs4Dash,
+  abjur/forosCNJ
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

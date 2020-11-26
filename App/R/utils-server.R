@@ -2,7 +2,8 @@
 #'
 #' @description Lê um arquivo .json ou .xml e retorna uma base de dados pronta para o uso
 #'
-#' @param inflie Arquivo .json ou .xml a ser estruturado
+#' @param infile Arquivo .json ou .xml a ser estruturado
+#' @param names nomes dos arquivos
 #'
 #' @export
 parse_file <- function(infile,names){
@@ -137,7 +138,8 @@ parse_file <- function(infile,names){
 #'
 #' @description Lê os assuntos e dados basicos (saida de parse_files) e retorna o da_incos
 #'
-#' @param baiscs lista contendo assuntos e basics
+#' @param lista_bases lista contendo assuntos e basics
+#' @param session session do shiny
 #'
 #' @export
 cria_da_incos <- function(lista_bases,session){
@@ -159,18 +161,20 @@ cria_da_incos <- function(lista_bases,session){
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 70)
 
 
-  tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assuntos)
+  tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = inovaCNJ::sgt_assuntos)
   tab_classe_assunto = inc_classe_assunto_fun(
     da_assunto = assuntos,
     da_basic = da_basic_transform,
-    sgt_assunto = sgt_assuntos)
+    sgt_assunto = inovaCNJ::sgt_assuntos)
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 85)
 
 
+  tab_vazia <- tibble::tibble(file_json = "a", rowid = "b") %>%
+    dplyr::slice(0)
   tab_incos_movs <- inc_funcs[stringr::str_detect(inc_funcs, "^inc_mov")] %>%
     purrr::set_names() %>%
-    purrr::map(~get(.x)(mov)) %>%
+    purrr::map(~purrr::possibly(get(.x), tab_vazia)(mov)) %>%
     purrr::imap(~{
       .x %>%
         dplyr::group_by(file_json,rowid) %>%
@@ -201,7 +205,8 @@ cria_da_incos <- function(lista_bases,session){
 #'
 #' @description Lê o da_incos e o basics e cria o da_totais
 #'
-#' @param baiscs lista contendo assuntos e basics
+#' @param lista_bases lista contendo assuntos e basics
+#' @param da_incos base de inconsistencias
 #'
 #' @export
 cria_da_totais <- function(lista_bases,da_incos){
@@ -219,11 +224,11 @@ cria_da_totais <- function(lista_bases,da_incos){
   da_totais_incos <- da_incos %>%
     dplyr::group_by(justica, tribunal) %>%
     dplyr::summarise(
-      dplyr::across(matches("^inc_mov"), ~sum(map_lgl(.x, is.null))),
-      dplyr::across(matches("^inc_[a-z]{3}[^_]"), ~sum(!is.na(.x))),
+      dplyr::across(dplyr::matches("^inc_mov"), ~sum(map_lgl(.x, is.null))),
+      dplyr::across(dplyr::matches("^inc_[a-z]{3}[^_]"), ~sum(!is.na(.x))),
       .groups = "drop"
     ) %>%
-    tidyr::pivot_longer(starts_with("inc")) %>%
+    tidyr::pivot_longer(dplyr::starts_with("inc")) %>%
     dplyr::group_by(justica, tribunal) %>%
     dplyr::summarise(media = mean(value), .groups = "drop")
 

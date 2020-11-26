@@ -40,17 +40,19 @@ Link para acesso à plataforma: <https://abjur.shinyapps.io/inovaCNJ>
 
 Pessoa técnica judiciária:
 
-**Login**: [usuario\@inovacnj.com](mailto:usuario@inovacnj.com){.email}
+**Login**: [usuario\@inovacnj.com](mailto:usuario@inovacnj.com)
 
 **Senha**: CNJ!2020
 
 Pessoa pesquisadora do CNJ:
 
-**Login**: [admin\@inovacnj.com](mailto:usuario@inovacnj.com){.email}
+**Login**: [admin\@inovacnj.com](mailto:usuario@inovacnj.com)
 
 **Senha**: CNJ!2020
 
 ## Aba 1: Menu principal
+
+![](images/geral.gif)
 
 O menu principal contém 4 cards e 1 gráfico e 1 tabela, descritos a seguir.
 
@@ -72,6 +74,8 @@ O menu principal contém 4 cards e 1 gráfico e 1 tabela, descritos a seguir.
 
 ## Aba 2: Inconsistências
 
+![](images/inconsistencias.gif)
+
 A aba de inconsistências apresenta uma série de caixas, cada uma sobre uma possível inconsistência. É a aba principal do aplicativo, a ser utilizada principalmente pelas pessoas técnicas judiciárias.
 
 -   **Botão de download**: Faz o download de uma planilha Excel com todos os processos com algum problema identificado.
@@ -89,11 +93,21 @@ A aba de inconsistências apresenta uma série de caixas, cada uma sobre uma pos
 
 ## Aba 3: Verificação das inconsistências submetidas
 
+![](images/verificador.gif)
+
 Essa aba deve ser utilizada pela pessoa pesquisadora do CNJ, para realizar a verificação das informações submetidas pelos tribunais.
+
+A primeira caixa permite o download das bases arrumadas, consolidando todas as correções automáticas e manuais que foram submetidas na plataforma.
 
 A primeira tabela da aba mostra todas as tabelas submetidas. Ao clicar em uma linha, é mostrada na segunda tabela, os dados arrumados sugeridos. A base pode ser baixada para inspeção manual e, eventualmente, pode ser usada para fazer uma nova submissão na aba de inconsistências.
 
 As bases validadas ficam em um banco de dados, e podem ser utilizadas pelo CNJ para corrigir as inconsistências do DataJud. No final, o CNJ pode disponibilizar tanto a base bruta do DataJud quanto a base arrumada.
+
+## Aba 4: Validação de dados
+
+![](images/validador_arquivos.gif)
+
+Essa aba pode ser utilizada para verificar as inconsistências de um arquivo .json específico, antes de submetê-lo para o CNJ. Da mesma forma que as abas anteriores, é possível visualizar as inconsistências e suas correções.
 
 # Vídeo
 

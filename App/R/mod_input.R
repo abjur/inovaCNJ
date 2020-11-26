@@ -20,13 +20,32 @@ mod_input_ui <- function(id){
                                            total = 100,
                                            display_pct = TRUE)),
 
-    bs4Dash::box(inputId = ns('tabpanels'),title = 'Validação',width = 12,closable = FALSE,
-      bs4Dash::bs4TabSetPanel(id = ns('tabpanel'),side = 'left',
-                              bs4Dash::tabPanel(tabName = "Base estruturada",active = TRUE,
-                                                reactable::reactableOutput(outputId = ns('input_table'))),
-                              bs4Dash::tabPanel(tabName = "Inconsistências",active = FALSE,
-                                                shiny::uiOutput(ns('inc_valid')))
-
+    bs4Dash::box(
+      inputId = ns('tabpanels'),
+      title = 'Validação',
+      width = 12,
+      closable = FALSE,
+      bs4Dash::bs4TabSetPanel(
+        id = ns('tabpanel'),
+        side = 'left',
+        bs4Dash::tabPanel(tabName = "Base estruturada",active = TRUE,
+                          reactable::reactableOutput(outputId = ns('input_table'))),
+        bs4Dash::tabPanel(tabName = "Inconsistências",active = FALSE,
+                          shiny::uiOutput(ns('inc_valid'))),
+        bs4Dash::tabPanel(
+          tabName = "Download dados arrumados",
+          active = FALSE,
+          shiny::fluidRow(col_12(
+            shiny::downloadButton(
+              ns("base_json"),
+              label = "Download (JSON)"
+            ),
+            shiny::downloadButton(
+              ns("base_csv"),
+              label = "Download (CSV)"
+            )
+          ))
+        )
 
       )
     )
@@ -57,6 +76,57 @@ cria_tabela_json <- function(infile){
 mod_input_server <- function(id) {
   shiny::moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    base_arrumada <- shiny::reactive({
+
+      browser()
+
+      da_sugestoes <- infile()$incos %>%
+        dplyr::select(id, dplyr::starts_with("sol_")) %>%
+        dplyr::filter_at(
+          dplyr::vars(dplyr::starts_with("sol_"), -sol_digito),
+          dplyr::any_vars(!is.na(.))
+        ) %>%
+        dplyr::distinct(id, .keep_all = TRUE)
+
+      todos_dados <- infile()$incos %>%
+        dplyr::select(
+          -dplyr::starts_with("inc_"),
+          -dplyr::starts_with("sol_")
+        )
+
+      dados_para_arrumar <- todos_dados %>%
+        dplyr::distinct(id, .keep_all = TRUE) %>%
+        dplyr::semi_join(da_sugestoes, "id")
+
+      dados_arrumados <- purrr::reduce(
+        names(da_sugestoes)[-1],
+        corrigir_coluna,
+        da_sugestoes,
+        .init = dados_para_arrumar
+      )
+
+      dados_arrumados
+    })
+    # exportar dados arrumados
+    output$base_json <- shiny::downloadHandler(
+      filename = function() {
+        paste0(Sys.Date(), "-base_arrumada.json")
+      },
+      content = function(file) {
+        jsonlite::write_json(base_arrumada(), file)
+      }
+    )
+    output$base_csv <- shiny::downloadHandler(
+      filename = function() {
+        paste0(Sys.Date(), "-base_arrumada.csv")
+      },
+      content = function(file) {
+        readr::write_csv(base_arrumada(), file)
+      }
+    )
+
+
 
     infile <- shiny::eventReactive(input$input_file,{
 
@@ -99,7 +169,7 @@ mod_input_server <- function(id) {
     })
 
     output$inc_valid <- shiny::renderUI({
-      mod_incos_ui(ns("incos_ui_2"))
+      mod_incos_ui(ns("incos_ui_2"), FALSE)
     })
 
     mod_incos_server(id = 'incos_ui_2',app_data = infile)

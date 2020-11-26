@@ -77,7 +77,7 @@ app_ui <- function() {
           ),
           bs4Dash::bs4TabItem(
             tabName = "menu_incos",
-            mod_incos_ui("incos_ui_1")
+            mod_incos_ui("incos_ui_1", TRUE)
           ),
           bs4Dash::bs4TabItem(
             tabName = "menu_verificacao",
