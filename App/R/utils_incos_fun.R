@@ -317,7 +317,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
     }
   } %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,principal),names_to = 'tipo_codigo',values_to = 'codigo') %>%
-    dplyr::left_join(sgt_assunto,'codigo') %>%
+    dplyr::left_join(dplyr::mutate(sgt_assunto,codigo = as.character(codigo)),'codigo') %>%
     dplyr::transmute(file_json,
                      rowid,
                      dscr,
@@ -372,7 +372,7 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
   } %>%
     dplyr::left_join(dplyr::select(da_basic,file_json,rowid,classe_processual),c('file_json','rowid')) %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,classe_processual),names_to = 'tipo_codigo',values_to = 'codigo') %>%
-    dplyr::left_join(sgt_assunto,'codigo') %>%
+    dplyr::left_join(dplyr::mutate(sgt_assunto,codigo = as.character(codigo)),'codigo') %>%
     dplyr::filter(!is.na(codigo)) %>%
     dplyr::group_by(classe_processual,codigo) %>%
     dplyr::mutate(n = dplyr::n()) %>%
@@ -400,29 +400,29 @@ inc_mov_responsavel_fun <- function(mov) {
   message('responsável movimentação')
 
   if("codigoPaiNacional" %in% names(mov) & "tipoResponsavelMovimento" %in% names(mov)){
-  r<- mov %>%
-    dplyr::mutate(
-      inc_responsavel_mov = dplyr::case_when(
-        (tipoResponsavelMovimento == '1' &
-           !(codigoPaiNacional %in% c('1', '12524'))) |
-          (tipoResponsavelMovimento == '0' &
-             codigoPaiNacional %in% c('1', '12524'))
-        ~ 'Movimentação Com Responsável Incorreto'
-      ),
-      sol_responsavel_mov = dplyr::case_when(
-        codigoPaiNacional %in% c('1', '12524') ~ '1',
-        !(codigoPaiNacional %in% c('1', '12524')) ~ '0'
-      )
-    ) %>%
-    dplyr::transmute(
-      file_json,
-      rowid,
-      inc_responsavel_mov,
-      info_responsavel_mov = as.character(tipoResponsavelMovimento),
-      sol_responsavel_mov
-    ) %>%
-    dplyr::filter(!is.na(inc_responsavel_mov)) %>%
-    dplyr::distinct()
+    r<- mov %>%
+      dplyr::mutate(
+        inc_responsavel_mov = dplyr::case_when(
+          (tipoResponsavelMovimento == '1' &
+             !(codigoPaiNacional %in% c('1', '12524'))) |
+            (tipoResponsavelMovimento == '0' &
+               codigoPaiNacional %in% c('1', '12524'))
+          ~ 'Movimentação Com Responsável Incorreto'
+        ),
+        sol_responsavel_mov = dplyr::case_when(
+          codigoPaiNacional %in% c('1', '12524') ~ '1',
+          !(codigoPaiNacional %in% c('1', '12524')) ~ '0'
+        )
+      ) %>%
+      dplyr::transmute(
+        file_json,
+        rowid,
+        inc_responsavel_mov,
+        info_responsavel_mov = as.character(tipoResponsavelMovimento),
+        sol_responsavel_mov
+      ) %>%
+      dplyr::filter(!is.na(inc_responsavel_mov)) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(file_json,
@@ -444,31 +444,31 @@ inc_mov_demorada_fun <- function(mov) {
   message('movimentação muito demorada')
 
   if("dataHora" %in% names(mov)){
-  r<- mov %>%
-    dplyr::mutate(
-      data = dataHora,
-      data = stringr::str_sub(data, 1L, 8L),
-      data = lubridate::ymd(data, quiet = TRUE)
-    ) %>%
-    dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
-    dplyr::select(file_json, rowid, data, dataHora) %>%
-    dplyr::mutate(movimentacao_demorada = -1*as.numeric(dplyr::lead(data) - data)) %>%
-    dplyr::mutate(
-      inc_mov_demorada = dplyr::case_when(
-        movimentacao_demorada > 1825 ~
-          'Tempo desde última movimentação acima de 5 anos.'
-      )
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::transmute(
-      file_json,
-      rowid,
-      inc_mov_demorada,
-      info_mov_demorada = dataHora,
-    ) %>%
-    dplyr::filter(!is.na(inc_mov_demorada)) %>%
-    dplyr::distinct()
+    r<- mov %>%
+      dplyr::mutate(
+        data = dataHora,
+        data = stringr::str_sub(data, 1L, 8L),
+        data = lubridate::ymd(data, quiet = TRUE)
+      ) %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
+      dplyr::select(file_json, rowid, data, dataHora) %>%
+      dplyr::mutate(movimentacao_demorada = -1*as.numeric(dplyr::lead(data) - data)) %>%
+      dplyr::mutate(
+        inc_mov_demorada = dplyr::case_when(
+          movimentacao_demorada > 1825 ~
+            'Tempo desde última movimentação acima de 5 anos.'
+        )
+      ) %>%
+      dplyr::ungroup() %>%
+      dplyr::transmute(
+        file_json,
+        rowid,
+        inc_mov_demorada,
+        info_mov_demorada = dataHora,
+      ) %>%
+      dplyr::filter(!is.na(inc_mov_demorada)) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -498,29 +498,29 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
       cod_filhos
     )
   if("codigoPaiNacional" %in% names(mov) & "codigoNacional" %in% names(mov)){
-  r<- mov %>%
-    dplyr::select(
-      file_json,
-      rowid,
-      codigoNacional,
-      codigoPaiNacional
-    ) %>%
-    dplyr::filter(is.na(codigoPaiNacional)) %>%
-    dplyr::mutate(
-      inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
-    ) %>%
-    dplyr::left_join(
-      dplyr::select(sgt_movs, codigo, cod_pai), by = c('codigoNacional' = 'codigo')
-    ) %>%
-    dplyr::transmute(
-      file_json,
-      rowid,
-      inc_cod_pai_faltante,
-      info_cod_pai_faltante = as.character(codigoPaiNacional),
-      sol_cod_pai_faltante = cod_pai
-    ) %>%
-    dplyr::filter(!is.na(inc_cod_pai_faltante)) %>%
-    dplyr::distinct()
+    r<- mov %>%
+      dplyr::select(
+        file_json,
+        rowid,
+        codigoNacional,
+        codigoPaiNacional
+      ) %>%
+      dplyr::filter(is.na(codigoPaiNacional)) %>%
+      dplyr::mutate(
+        inc_cod_pai_faltante = 'Não há código pai da movimentação local.'
+      ) %>%
+      dplyr::left_join(
+        dplyr::select(sgt_movs, codigo, cod_pai), by = c('codigoNacional' = 'codigo')
+      ) %>%
+      dplyr::transmute(
+        file_json,
+        rowid,
+        inc_cod_pai_faltante,
+        info_cod_pai_faltante = as.character(codigoPaiNacional),
+        sol_cod_pai_faltante = cod_pai
+      ) %>%
+      dplyr::filter(!is.na(inc_cod_pai_faltante)) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -545,32 +545,32 @@ inc_mov_processo_longo_fun <- function(mov){
   message('processos longos')
 
   if("dataHora" %in% names(mov)){
-  r<- mov %>%
-    dplyr::mutate(
-      data = dataHora,
-      data = stringr::str_sub(data, 1L, 8L),
-      data = lubridate::ymd(data, quiet = TRUE)
-    ) %>%
-    dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
-    dplyr::select(file_json, rowid, data, dataHora) %>%
-    dplyr::mutate(processo_longo = as.numeric(dplyr::first(data) - dplyr::last(data))) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(-data) %>%
-    dplyr::distinct_at(dplyr::vars(-dataHora), .keep_all = TRUE) %>%
-    dplyr::mutate(
-      tempo_corte = quantile(processo_longo, probs = .75, na.rm = TRUE),
-      inc_processo_longo = dplyr::case_when(
-        processo_longo > tempo_corte ~
-          'Duração do processo é maior do que 75% de todos os processos.'
-      )) %>%
-    dplyr::transmute(
-      file_json, rowid,
-      inc_processo_longo,
-      info_processo_longo = dataHora
-    ) %>%
-    dplyr::filter(!is.na(inc_processo_longo)) %>%
-    dplyr::distinct()
+    r<- mov %>%
+      dplyr::mutate(
+        data = dataHora,
+        data = stringr::str_sub(data, 1L, 8L),
+        data = lubridate::ymd(data, quiet = TRUE)
+      ) %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
+      dplyr::select(file_json, rowid, data, dataHora) %>%
+      dplyr::mutate(processo_longo = as.numeric(dplyr::first(data) - dplyr::last(data))) %>%
+      dplyr::ungroup() %>%
+      dplyr::select(-data) %>%
+      dplyr::distinct_at(dplyr::vars(-dataHora), .keep_all = TRUE) %>%
+      dplyr::mutate(
+        tempo_corte = quantile(processo_longo, probs = .75, na.rm = TRUE),
+        inc_processo_longo = dplyr::case_when(
+          processo_longo > tempo_corte ~
+            'Duração do processo é maior do que 75% de todos os processos.'
+        )) %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_processo_longo,
+        info_processo_longo = dataHora
+      ) %>%
+      dplyr::filter(!is.na(inc_processo_longo)) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -592,55 +592,55 @@ inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
   message('id de movimentos não corresponde à ordem cronológica das movs')
 
   if("identificadorMovimento" %in% names(mov) & "dataHora" %in% names(mov)){
-  mov_ordenada <- mov %>%
-    dplyr::select(file_json, rowid,identificadorMovimento,dataHora) %>%
-    dplyr::filter(!is.na(identificadorMovimento)) %>%
-    dplyr::distinct(file_json, rowid, identificadorMovimento,.keep_all = TRUE) %>%
-    dplyr::mutate(
-      data = dataHora,
-      data = stringr::str_sub(data, 1L, 8L),
-      data = lubridate::ymd(data, quiet = TRUE)
-    ) %>%
-    dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
-    dplyr::mutate_at(dplyr::vars(identificadorMovimento), as.integer) %>%
-    dplyr::mutate(
-      inc_id_mov_segue_ordem_cronologica =
-        identificadorMovimento - dplyr::lead(identificadorMovimento) > 0,
-      inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
-        is.na(inc_id_mov_segue_ordem_cronologica),
-        TRUE,
-        inc_id_mov_segue_ordem_cronologica
-      ),
-      inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
-        all(inc_id_mov_segue_ordem_cronologica == TRUE),
-        'ID do movimento segue ordem cronológica',
-        'ID do movimento NÃO segue ordem cronológica'
-      )
-    ) %>%
-    dplyr::filter(
-      inc_id_mov_segue_ordem_cronologica == 'ID do movimento NÃO segue ordem cronológica'
-    ) %>%
-    filter(!is.na(identificadorMovimento))
+    mov_ordenada <- mov %>%
+      dplyr::select(file_json, rowid,identificadorMovimento,dataHora) %>%
+      dplyr::filter(!is.na(identificadorMovimento)) %>%
+      dplyr::distinct(file_json, rowid, identificadorMovimento,.keep_all = TRUE) %>%
+      dplyr::mutate(
+        data = dataHora,
+        data = stringr::str_sub(data, 1L, 8L),
+        data = lubridate::ymd(data, quiet = TRUE)
+      ) %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
+      dplyr::mutate_at(dplyr::vars(identificadorMovimento), as.integer) %>%
+      dplyr::mutate(
+        inc_id_mov_segue_ordem_cronologica =
+          identificadorMovimento - dplyr::lead(identificadorMovimento) > 0,
+        inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
+          is.na(inc_id_mov_segue_ordem_cronologica),
+          TRUE,
+          inc_id_mov_segue_ordem_cronologica
+        ),
+        inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
+          all(inc_id_mov_segue_ordem_cronologica == TRUE),
+          'ID do movimento segue ordem cronológica',
+          'ID do movimento NÃO segue ordem cronológica'
+        )
+      ) %>%
+      dplyr::filter(
+        inc_id_mov_segue_ordem_cronologica == 'ID do movimento NÃO segue ordem cronológica'
+      ) %>%
+      filter(!is.na(identificadorMovimento))
 
-  ordem_correta <- mov_ordenada %>%
-    dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(
-      file_json, rowid, dplyr::desc(identificadorMovimento), .by_group = TRUE
-    ) %>%
-    dplyr::ungroup() %>%
-    {.$identificadorMovimento}
+    ordem_correta <- mov_ordenada %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::arrange(
+        file_json, rowid, dplyr::desc(identificadorMovimento), .by_group = TRUE
+      ) %>%
+      dplyr::ungroup() %>%
+      {.$identificadorMovimento}
 
-  mov_ordenada$sol_id_mov_segue_ordem_cronologica <- ordem_correta
-  r <- mov_ordenada %>%
-    dplyr::ungroup() %>%
-    dplyr::transmute(
-      file_json, rowid,
-      inc_id_mov_segue_ordem_cronologica,
-      info_id_mov_segue_ordem_cronologica = as.character(identificadorMovimento),
-      sol_id_mov_segue_ordem_cronologica = as.character(sol_id_mov_segue_ordem_cronologica)
-    ) %>%
-    dplyr::distinct()
+    mov_ordenada$sol_id_mov_segue_ordem_cronologica <- ordem_correta
+    r <- mov_ordenada %>%
+      dplyr::ungroup() %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_id_mov_segue_ordem_cronologica,
+        info_id_mov_segue_ordem_cronologica = as.character(identificadorMovimento),
+        sol_id_mov_segue_ordem_cronologica = as.character(sol_id_mov_segue_ordem_cronologica)
+      ) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -689,54 +689,54 @@ inc_mov_relevante_ordenada_fun <- function(mov){
   )
 
   if("codigoNacional" %in% names(mov)){
-  mov_relevantes_ordenadas <- mov %>%
-    dplyr::mutate(codigoNacional = as.character(codigoNacional)) %>%
-    dplyr::mutate(
-      data = dataHora,
-      data = stringr::str_sub(data, 1L, 8L),
-      data = lubridate::ymd(data, quiet = TRUE)
-    ) %>%
-    dplyr::filter(!is.na(codigoNacional)) %>%
-    dplyr::filter(codigoNacional %in% mov_relevantes$codigo) %>%
-    dplyr::left_join(
-      mov_relevantes, by = c('codigoNacional' = 'codigo')
-    ) %>%
-    dplyr::select(-descricao_filha) %>%
-    dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE)
+    mov_relevantes_ordenadas <- mov %>%
+      dplyr::mutate(codigoNacional = as.character(codigoNacional)) %>%
+      dplyr::mutate(
+        data = dataHora,
+        data = stringr::str_sub(data, 1L, 8L),
+        data = lubridate::ymd(data, quiet = TRUE)
+      ) %>%
+      dplyr::filter(!is.na(codigoNacional)) %>%
+      dplyr::filter(codigoNacional %in% mov_relevantes$codigo) %>%
+      dplyr::left_join(
+        mov_relevantes, by = c('codigoNacional' = 'codigo')
+      ) %>%
+      dplyr::select(-descricao_filha) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE)
 
-  r <- mov_relevantes_ordenadas %>%
-    dplyr::group_by(file_json, rowid) %>%
-    dplyr::mutate(mov_ordem = dplyr::row_number()) %>%
-    dplyr::mutate(
-      descricao = factor(descricao, ordered = TRUE, levels = ordem_correta)
-    ) %>%
-    dplyr::arrange(file_json, rowid, descricao, .by_group = TRUE) %>%
-    dplyr::mutate(
-      inc_mov_relevante_ordenada = mov_ordem - dplyr::lead(mov_ordem) < 0,
-      inc_mov_relevante_ordenada = dplyr::if_else(
-        is.na(inc_mov_relevante_ordenada), TRUE, inc_mov_relevante_ordenada
-      ),
-      inc_mov_relevante_ordenada = all(inc_mov_relevante_ordenada == TRUE),
-      inc_mov_relevante_ordenada = dplyr::if_else(
-        inc_mov_relevante_ordenada == TRUE,
-        'Movimentos relevantes estão na ordem correta',
-        'Movimentos relevantes estão fora de ordem'
-      )
-    ) %>%
-    dplyr::filter(
-      inc_mov_relevante_ordenada == 'Movimentos relevantes estão fora de ordem'
-    ) %>%
-    dplyr::arrange(
-      file_json, rowid, mov_ordem, dplyr::desc(descricao), .by_group = TRUE
-    ) %>%
-    dplyr::mutate(sol_mov_relevante_ordenada = dplyr::row_number()) %>%
-    dplyr::ungroup() %>%
-    dplyr::transmute(
-      file_json, rowid, inc_mov_relevante_ordenada,
-      info_mov_relevante_ordenada = identificadorMovimento,
-      sol_mov_relevante_ordenada = as.character(sol_mov_relevante_ordenada)
-    ) %>%
-    dplyr::distinct()
+    r <- mov_relevantes_ordenadas %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::mutate(mov_ordem = dplyr::row_number()) %>%
+      dplyr::mutate(
+        descricao = factor(descricao, ordered = TRUE, levels = ordem_correta)
+      ) %>%
+      dplyr::arrange(file_json, rowid, descricao, .by_group = TRUE) %>%
+      dplyr::mutate(
+        inc_mov_relevante_ordenada = mov_ordem - dplyr::lead(mov_ordem) < 0,
+        inc_mov_relevante_ordenada = dplyr::if_else(
+          is.na(inc_mov_relevante_ordenada), TRUE, inc_mov_relevante_ordenada
+        ),
+        inc_mov_relevante_ordenada = all(inc_mov_relevante_ordenada == TRUE),
+        inc_mov_relevante_ordenada = dplyr::if_else(
+          inc_mov_relevante_ordenada == TRUE,
+          'Movimentos relevantes estão na ordem correta',
+          'Movimentos relevantes estão fora de ordem'
+        )
+      ) %>%
+      dplyr::filter(
+        inc_mov_relevante_ordenada == 'Movimentos relevantes estão fora de ordem'
+      ) %>%
+      dplyr::arrange(
+        file_json, rowid, mov_ordem, dplyr::desc(descricao), .by_group = TRUE
+      ) %>%
+      dplyr::mutate(sol_mov_relevante_ordenada = dplyr::row_number()) %>%
+      dplyr::ungroup() %>%
+      dplyr::transmute(
+        file_json, rowid, inc_mov_relevante_ordenada,
+        info_mov_relevante_ordenada = identificadorMovimento,
+        sol_mov_relevante_ordenada = as.character(sol_mov_relevante_ordenada)
+      ) %>%
+      dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -744,6 +744,83 @@ inc_mov_relevante_ordenada_fun <- function(mov){
         inc_mov_relevante_ordenada = NA_character_,
         info_mov_relevante_ordenada = NA_character_,
         sol_mov_relevante_ordenada = NA_character_
+      )
+
+  }
+  return(r)
+}
+
+
+#' inc_mov_relevante_faltante_fun
+#'
+#' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @export
+inc_mov_relevante_faltante_fun <- function(mov){
+  message('processos já arquivados não têm todas as movs anteriores registradas')
+
+  sgt_movs <- sgt_movs %>%
+    dplyr::mutate_all(as.character) %>%
+    dplyr::mutate(cod_pai = as.character(as.integer(cod_pai)))
+
+  mov_relevantes <- sgt_movs %>%
+    dplyr::filter(codigo %in% c('22', '26', '193', '228', '848')) %>%
+    dplyr::mutate(cod_filhos = paste(codigo, cod_filhos, sep = ',')) %>%
+    dplyr::mutate(cod_filhos = stringr::str_replace(cod_filhos, ',NA', '')) %>%
+    tidyr::separate_rows(cod_filhos, sep = ',') %>%
+    dplyr::select(descricao, codigo = cod_filhos) %>%
+    dplyr::mutate(
+      descricao = if_else(
+        descricao == 'Baixa Definitiva' | descricao == 'Arquivamento',
+        'Arquivamento/Baixa Definitiva', descricao
+      )
+    )
+
+  mov_relevantes <- mov_relevantes %>%
+    dplyr::left_join(sgt_movs, by = c('codigo' = 'codigo')) %>%
+    dplyr::select(descricao = descricao.x, codigo, descricao_filha = descricao.y)
+  ordem_correta <- c(
+    'Arquivamento/Baixa Definitiva', 'Trânsito em julgado', 'Distribuição',
+    'Julgamento'
+  )
+  if("codigoNacional" %in% names(mov)){
+    mov_faltantes <- mov %>%
+      dplyr::mutate(codigoNacional = as.character(codigoNacional)) %>%
+      dplyr::mutate(
+        data = dataHora,
+        data = stringr::str_sub(data, 1L, 8L),
+        data = lubridate::ymd(data, quiet = TRUE)
+      ) %>%
+      dplyr::filter(!is.na(codigoNacional)) %>%
+      dplyr::filter(codigoNacional %in% mov_relevantes$codigo) %>%
+      dplyr::left_join(
+        mov_relevantes, by = c('codigoNacional' = 'codigo')
+      ) %>%
+      dplyr::select(-descricao_filha) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
+      dplyr::mutate(
+        descricao = factor(descricao, ordered = TRUE, levels = ordem_correta)
+      )
+    r <- mov_faltantes %>%
+      dplyr::group_by(file_json, rowid) %>%
+      dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
+      dplyr::filter(dplyr::first(descricao) == 'Arquivamento/Baixa Definitiva') %>%
+      dplyr::mutate(info_mov_faltante = all(levels(descricao) %in% descricao)) %>%
+      dplyr::filter(info_mov_faltante == FALSE) %>%
+      dplyr::transmute(
+        file_json = file_json, rowid = rowid,
+        inc_mov_faltante = paste0(
+          'Processos já arquivados não contêm',
+          ' todas as movimentações principais anteriores'
+        ),
+        info_mov_faltante = descricao
+      )
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_mov_faltante = NA_character_,
+        info_mov_faltante = NA_character_
       )
 
   }

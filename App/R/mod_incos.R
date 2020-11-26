@@ -87,6 +87,10 @@ incos_mapeadas <- function() {
     "mov_relevante_ordenada_fun" = list(
       nome = "Movimentações fora de ordem",
       desc = "A numeração do identificador único de movimentos não seguem padrão compatível com a ordem cronológica dos movimentos."
+    ),
+    "mov_relevante_faltante_fun" = list(
+      nome = "Movimentações relevante faltante",
+      desc = "Ausência de movimentação importante em processos arquivados/baixados definitivamente"
     )
   )
 }
