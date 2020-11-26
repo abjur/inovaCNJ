@@ -141,8 +141,8 @@ parse_file <- function(infile,names){
 #'
 #' @export
 cria_da_incos <- function(lista_bases,session){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "tre-pb.*.json", recurse = TRUE)
-  # lista_bases <- parse_file(infile = infile,names = str_extract(infile,'processos.[^/]*json$'))
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "tre-to.*.json", recurse = TRUE)
+  # lista_bases <- parse_file(infile = infile,names = stringr::str_extract(infile,'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
   mov <- lista_bases$movs

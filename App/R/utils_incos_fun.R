@@ -317,7 +317,7 @@ inc_assuntos_fun <- function(da_assunto,sgt_assunto){
     }
   } %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,principal),names_to = 'tipo_codigo',values_to = 'codigo') %>%
-    dplyr::left_join(dplyr::mutate(sgt_assunto,codigo = as.character(codigo)),'codigo') %>%
+    dplyr::left_join(sgt_assunto,'codigo') %>%
     dplyr::transmute(file_json,
                      rowid,
                      dscr,
@@ -372,7 +372,7 @@ inc_classe_assunto_fun <- function(da_assunto,da_basic,sgt_assunto){
   } %>%
     dplyr::left_join(dplyr::select(da_basic,file_json,rowid,classe_processual),c('file_json','rowid')) %>%
     tidyr::pivot_longer(cols = -c(file_json,rowid,classe_processual),names_to = 'tipo_codigo',values_to = 'codigo') %>%
-    dplyr::left_join(dplyr::mutate(sgt_assunto,codigo = as.character(codigo)),'codigo') %>%
+    dplyr::left_join(sgt_assunto,'codigo') %>%
     dplyr::filter(!is.na(codigo)) %>%
     dplyr::group_by(classe_processual,codigo) %>%
     dplyr::mutate(n = dplyr::n()) %>%
@@ -605,8 +605,7 @@ inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
       dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
       dplyr::mutate_at(dplyr::vars(identificadorMovimento), as.integer) %>%
       dplyr::mutate(
-        inc_id_mov_segue_ordem_cronologica =
-          identificadorMovimento - dplyr::lead(identificadorMovimento) > 0,
+        inc_id_mov_segue_ordem_cronologica = identificadorMovimento - dplyr::lead(identificadorMovimento) > 0,
         inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
           is.na(inc_id_mov_segue_ordem_cronologica),
           TRUE,
@@ -621,7 +620,7 @@ inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
       dplyr::filter(
         inc_id_mov_segue_ordem_cronologica == 'ID do movimento NÃO segue ordem cronológica'
       ) %>%
-      filter(!is.na(identificadorMovimento))
+      dplyr::filter(!is.na(identificadorMovimento))
 
     ordem_correta <- mov_ordenada %>%
       dplyr::group_by(file_json, rowid) %>%
@@ -770,7 +769,7 @@ inc_mov_relevante_faltante_fun <- function(mov){
     tidyr::separate_rows(cod_filhos, sep = ',') %>%
     dplyr::select(descricao, codigo = cod_filhos) %>%
     dplyr::mutate(
-      descricao = if_else(
+      descricao = dplyr::if_else(
         descricao == 'Baixa Definitiva' | descricao == 'Arquivamento',
         'Arquivamento/Baixa Definitiva', descricao
       )

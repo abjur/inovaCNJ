@@ -6,7 +6,8 @@ assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>%
     dplyr::distinct() %>%
     dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
 
-sgt_assunto <- sgt_assuntos
+sgt_assunto <- sgt_assuntos %>%
+  dplyr::mutate(codigo = as.character(codigo))
 
 mov <- readr::read_csv('../dados/processados/mov_incos.csv',col_types = readr::cols(.default = 'c'))
 
