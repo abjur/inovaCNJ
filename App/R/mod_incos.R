@@ -79,6 +79,14 @@ incos_mapeadas <- function() {
     "mov_demorada_fun" = list(
       nome = "Movimentação demorada",
       desc = "Tempo desde última movimentação acima de 5 anos."
+    ),
+    "mov_id_segue_ordem_cronologica_fun" = list(
+      nome = "Identificador de Movimento Fora de Ordem Cronológica",
+      desc = "id de movimentos não corresponde à ordem cronológica das movs"
+    ),
+    "mov_relevante_ordenada_fun" = list(
+      nome = "Movimentações fora de ordem",
+      desc = "A numeração do identificador único de movimentos não seguem padrão compatível com a ordem cronológica dos movimentos."
     )
   )
 }

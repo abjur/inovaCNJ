@@ -6,8 +6,8 @@
 #'
 #' @export
 parse_file <- function(infile,names){
-  infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[450:453]
-  names = str_extract(infile,'processos.[^/]*json$')
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[450:453]
+  # names = str_extract(infile,'processos.[^/]*json$')
 
   aux_files <- infile %>%
     tibble::enframe() %>%
@@ -63,6 +63,7 @@ parse_file <- function(infile,names){
     if (!is.null(mv)) {
       colunas <- c("identificadorMovimento","tipoResponsavelMovimento", "complementoNacional",
                    "idDocumentoVinculado", "nivelSigilo", "dataHora", "tipoDecisao")
+      mv <- tibble::as_tibble(mv)
       nm <- colunas[colunas %in% names(mv)]
       dplyr::bind_cols(
         mv[,nm],
@@ -88,7 +89,8 @@ parse_file <- function(infile,names){
       dplyr::mutate(file_json = stringr::str_extract(id,'.*json'),
                     rowid = stringr::str_extract(id,'[0-9]*$')) %>%
       dplyr::select(-id) %>%
-      dplyr::select(file_json,rowid, dplyr::everything())
+      dplyr::select(file_json,rowid, dplyr::everything()) %>%
+      dplyr::distinct()
     } else{
       l_res <- dplyr::select(da_basic,file_json,rowid)
     }
@@ -139,7 +141,7 @@ parse_file <- function(infile,names){
 #'
 #' @export
 cria_da_incos <- function(lista_bases,session){
-  # infile <- fs::dir_ls("../dados/brutos/", regexp = "json", recurse = TRUE)[385:386]
+  # infile <- fs::dir_ls("../dados/brutos/", regexp = "tre-pb.*.json", recurse = TRUE)
   # lista_bases <- parse_file(infile = infile,names = str_extract(infile,'processos.[^/]*json$'))
   da_basic_transform <- lista_bases$basic
   assuntos <- lista_bases$assuntos %>% dplyr::distinct()
@@ -188,7 +190,7 @@ cria_da_incos <- function(lista_bases,session){
     dplyr::left_join(tab_assunto,by = c('file_json', 'rowid')) %>%
     dplyr::left_join(tab_classe_assunto, by = c('file_json', 'rowid')) %>%
     dplyr::left_join(tab_incos_movs, by = c('file_json', 'rowid')) %>%
-    dplyr::distinct()
+    dplyr::distinct(rowid,file_json,.keep_all=TRUE)
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 95)
 

@@ -39,7 +39,8 @@ inc_numero_justica_tribunal_fun <- function(da) {
         TRUE ~ sol_justica
       )
     ) %>%
-    dplyr::filter(!is.na(inc_justica))
+    dplyr::filter(!is.na(inc_justica)) %>%
+    dplyr::distinct()
 
   return(r)
 
@@ -68,7 +69,9 @@ inc_classe_fun <- function(da) {
         !classe_processual %in% classe_sgt$codigo ~ "Classe fora da SGT"
       )
     ) %>%
-    dplyr::filter(!is.na(inc_classe))
+    dplyr::filter(!is.na(inc_classe)) %>%
+    dplyr::distinct()
+
   return(r)
 }
 
@@ -110,7 +113,8 @@ inc_digito_fun <- function(da) {
       info_digito = numero,
       sol_digito = dig_calculado,
       inc_digito
-    )
+    ) %>%
+    dplyr::distinct()
 
   return(r)
 }
@@ -137,7 +141,9 @@ inc_data_ajuizamento_fun <- function(da) {
       id,
       info_data = data_ajuizamento,
       inc_data
-    )
+    ) %>%
+    dplyr::distinct()
+
   return(r)
 }
 
@@ -171,7 +177,8 @@ inc_sistema_fun <- function(da) {
       inc_sistema,
       sol_sistema = sistema_provavel
     ) %>%
-    dplyr::filter(!is.na(inc_sistema))
+    dplyr::filter(!is.na(inc_sistema)) %>%
+    dplyr::distinct()
 
   return(r)
 }
@@ -198,7 +205,8 @@ inc_proc_el_fun <- function(da) {
       inc_eletronico,
       sol_eletronico
     ) %>%
-    dplyr::filter(!is.na(inc_eletronico))
+    dplyr::filter(!is.na(inc_eletronico)) %>%
+    dplyr::distinct()
 
   return(r)
 }
@@ -224,7 +232,8 @@ inc_valor_fun <- function(da) {
         info_valor = valor_causa,
         inc_valor
       ) %>%
-      dplyr::filter(!is.na(inc_valor))
+      dplyr::filter(!is.na(inc_valor)) %>%
+      dplyr::distinct()
   } else {
     r <- da %>%
       dplyr::transmute(id,
@@ -253,7 +262,8 @@ inc_orgao_fun <- function(da) {
         !codigo_orgao %in% orgaos_base$codigo ~ "Classe fora do Anexo II CNJ"
       )
     ) %>%
-    dplyr::filter(!is.na(inc_orgao))
+    dplyr::filter(!is.na(inc_orgao)) %>%
+    dplyr::distinct()
   return(r)
 }
 
@@ -283,7 +293,8 @@ inc_municipio_fun <- function(da) {
       info_municipio = code_muni,
       inc_municipio = "Código do município não é compatível com base do IBGE",
       sol_municipio = ibge
-    )
+    ) %>%
+    dplyr::distinct()
 
   return(r)
 }
@@ -410,7 +421,8 @@ inc_mov_responsavel_fun <- function(mov) {
       info_responsavel_mov = as.character(tipoResponsavelMovimento),
       sol_responsavel_mov
     ) %>%
-    dplyr::filter(!is.na(inc_responsavel_mov))
+    dplyr::filter(!is.na(inc_responsavel_mov)) %>%
+    dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(file_json,
@@ -439,7 +451,7 @@ inc_mov_demorada_fun <- function(mov) {
       data = lubridate::ymd(data, quiet = TRUE)
     ) %>%
     dplyr::group_by(file_json, rowid) %>%
-    dplyr::arrange(file_json, rowid, desc(data)) %>%
+    dplyr::arrange(file_json, rowid, dplyr::desc(data)) %>%
     dplyr::select(file_json, rowid, data, dataHora) %>%
     dplyr::mutate(movimentacao_demorada = -1*as.numeric(dplyr::lead(data) - data)) %>%
     dplyr::mutate(
@@ -455,7 +467,8 @@ inc_mov_demorada_fun <- function(mov) {
       inc_mov_demorada,
       info_mov_demorada = dataHora,
     ) %>%
-    dplyr::filter(!is.na(inc_mov_demorada))
+    dplyr::filter(!is.na(inc_mov_demorada)) %>%
+    dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -506,7 +519,8 @@ inc_mov_cod_pai_faltante_fun <- function (mov) {
       info_cod_pai_faltante = as.character(codigoPaiNacional),
       sol_cod_pai_faltante = cod_pai
     ) %>%
-    dplyr::filter(!is.na(inc_cod_pai_faltante))
+    dplyr::filter(!is.na(inc_cod_pai_faltante)) %>%
+    dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -555,7 +569,8 @@ inc_mov_processo_longo_fun <- function(mov){
       inc_processo_longo,
       info_processo_longo = dataHora
     ) %>%
-    dplyr::filter(!is.na(inc_processo_longo))
+    dplyr::filter(!is.na(inc_processo_longo)) %>%
+    dplyr::distinct()
   } else{
     r <- mov %>%
       dplyr::transmute(
@@ -568,3 +583,169 @@ inc_mov_processo_longo_fun <- function(mov){
   return(r)
 }
 
+#' inc_id_mov_segue_ordem_cronologica_fun
+#'
+#' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @export
+inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
+  message('id de movimentos não corresponde à ordem cronológica das movs')
+
+  if("identificadorMovimento" %in% names(mov) & "dataHora" %in% names(mov)){
+  mov_ordenada <- mov %>%
+    dplyr::select(file_json, rowid,identificadorMovimento,dataHora) %>%
+    dplyr::filter(!is.na(identificadorMovimento)) %>%
+    dplyr::distinct(file_json, rowid, identificadorMovimento,.keep_all = TRUE) %>%
+    dplyr::mutate(
+      data = dataHora,
+      data = stringr::str_sub(data, 1L, 8L),
+      data = lubridate::ymd(data, quiet = TRUE)
+    ) %>%
+    dplyr::group_by(file_json, rowid) %>%
+    dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE) %>%
+    dplyr::mutate_at(dplyr::vars(identificadorMovimento), as.integer) %>%
+    dplyr::mutate(
+      inc_id_mov_segue_ordem_cronologica =
+        identificadorMovimento - dplyr::lead(identificadorMovimento) > 0,
+      inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
+        is.na(inc_id_mov_segue_ordem_cronologica),
+        TRUE,
+        inc_id_mov_segue_ordem_cronologica
+      ),
+      inc_id_mov_segue_ordem_cronologica = dplyr::if_else(
+        all(inc_id_mov_segue_ordem_cronologica == TRUE),
+        'ID do movimento segue ordem cronológica',
+        'ID do movimento NÃO segue ordem cronológica'
+      )
+    ) %>%
+    dplyr::filter(
+      inc_id_mov_segue_ordem_cronologica == 'ID do movimento NÃO segue ordem cronológica'
+    ) %>%
+    filter(!is.na(identificadorMovimento))
+
+  ordem_correta <- mov_ordenada %>%
+    dplyr::group_by(file_json, rowid) %>%
+    dplyr::arrange(
+      file_json, rowid, dplyr::desc(identificadorMovimento), .by_group = TRUE
+    ) %>%
+    dplyr::ungroup() %>%
+    {.$identificadorMovimento}
+
+  mov_ordenada$sol_id_mov_segue_ordem_cronologica <- ordem_correta
+  r <- mov_ordenada %>%
+    dplyr::ungroup() %>%
+    dplyr::transmute(
+      file_json, rowid,
+      inc_id_mov_segue_ordem_cronologica,
+      info_id_mov_segue_ordem_cronologica = as.character(identificadorMovimento),
+      sol_id_mov_segue_ordem_cronologica = as.character(sol_id_mov_segue_ordem_cronologica)
+    ) %>%
+    dplyr::distinct()
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_id_mov_segue_ordem_cronologica = NA_character_,
+        info_id_mov_segue_ordem_cronologica = NA_character_,
+        sol_id_mov_segue_ordem_cronologica = NA_character_
+      )
+
+  }
+  return(r)
+}
+
+#' inc_mov_relevante_ordenada_fun
+#'
+#' @description funções inc_ geram as inconsistências da base "da"
+#'
+#' @export
+inc_mov_relevante_ordenada_fun <- function(mov){
+  message('movimentações relevantes foram reportadas fora de ordem')
+
+  sgt_movs <- sgt_movs %>%
+    dplyr::mutate_all(as.character) %>%
+    dplyr::mutate(cod_pai = as.character(as.integer(cod_pai)))
+
+  mov_relevantes <- sgt_movs %>%
+    dplyr::filter(codigo %in% c('22', '26', '193', '228', '848')) %>%
+    dplyr::mutate(cod_filhos = paste(codigo, cod_filhos, sep = ',')) %>%
+    dplyr::mutate(cod_filhos = stringr::str_replace(cod_filhos, ',NA', '')) %>%
+    tidyr::separate_rows(cod_filhos, sep = ',') %>%
+    dplyr::select(descricao, codigo = cod_filhos) %>%
+    dplyr::mutate(
+      descricao = dplyr::if_else(
+        descricao == 'Baixa Definitiva' | descricao == 'Arquivamento',
+        'Arquivamento/Baixa Definitiva', descricao
+      )
+    )
+
+  mov_relevantes <- mov_relevantes %>%
+    dplyr::left_join(sgt_movs, by = c('codigo' = 'codigo')) %>%
+    dplyr::select(descricao = descricao.x, codigo, descricao_filha = descricao.y)
+
+  ordem_correta <- c(
+    'Arquivamento/Baixa Definitiva', 'Trânsito em julgado', 'Distribuição',
+    'Julgamento'
+  )
+
+  if("codigoNacional" %in% names(mov)){
+  mov_relevantes_ordenadas <- mov %>%
+    dplyr::mutate(codigoNacional = as.character(codigoNacional)) %>%
+    dplyr::mutate(
+      data = dataHora,
+      data = stringr::str_sub(data, 1L, 8L),
+      data = lubridate::ymd(data, quiet = TRUE)
+    ) %>%
+    dplyr::filter(!is.na(codigoNacional)) %>%
+    dplyr::filter(codigoNacional %in% mov_relevantes$codigo) %>%
+    dplyr::left_join(
+      mov_relevantes, by = c('codigoNacional' = 'codigo')
+    ) %>%
+    dplyr::select(-descricao_filha) %>%
+    dplyr::arrange(file_json, rowid, dplyr::desc(data), .by_group = TRUE)
+
+  r <- mov_relevantes_ordenadas %>%
+    dplyr::group_by(file_json, rowid) %>%
+    dplyr::mutate(mov_ordem = dplyr::row_number()) %>%
+    dplyr::mutate(
+      descricao = factor(descricao, ordered = TRUE, levels = ordem_correta)
+    ) %>%
+    dplyr::arrange(file_json, rowid, descricao, .by_group = TRUE) %>%
+    dplyr::mutate(
+      inc_mov_relevante_ordenada = mov_ordem - dplyr::lead(mov_ordem) < 0,
+      inc_mov_relevante_ordenada = dplyr::if_else(
+        is.na(inc_mov_relevante_ordenada), TRUE, inc_mov_relevante_ordenada
+      ),
+      inc_mov_relevante_ordenada = all(inc_mov_relevante_ordenada == TRUE),
+      inc_mov_relevante_ordenada = dplyr::if_else(
+        inc_mov_relevante_ordenada == TRUE,
+        'Movimentos relevantes estão na ordem correta',
+        'Movimentos relevantes estão fora de ordem'
+      )
+    ) %>%
+    dplyr::filter(
+      inc_mov_relevante_ordenada == 'Movimentos relevantes estão fora de ordem'
+    ) %>%
+    dplyr::arrange(
+      file_json, rowid, mov_ordem, dplyr::desc(descricao), .by_group = TRUE
+    ) %>%
+    dplyr::mutate(sol_mov_relevante_ordenada = dplyr::row_number()) %>%
+    dplyr::ungroup() %>%
+    dplyr::transmute(
+      file_json, rowid, inc_mov_relevante_ordenada,
+      info_mov_relevante_ordenada = identificadorMovimento,
+      sol_mov_relevante_ordenada = as.character(sol_mov_relevante_ordenada)
+    ) %>%
+    dplyr::distinct()
+  } else{
+    r <- mov %>%
+      dplyr::transmute(
+        file_json, rowid,
+        inc_mov_relevante_ordenada = NA_character_,
+        info_mov_relevante_ordenada = NA_character_,
+        sol_mov_relevante_ordenada = NA_character_
+      )
+
+  }
+  return(r)
+}
