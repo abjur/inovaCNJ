@@ -18,7 +18,7 @@ usethis::use_data(da_sample, overwrite = TRUE)
 
 # fix assuntos
 
-da_incos_fix <- inovaCNJ::da_incos %>%
+da_incos_fix <- da_incos %>%
   dplyr::mutate(dplyr::across(
     dplyr::matches("classe|assunto|generico|principal"),
     ~stringr::str_remove(.x, "\\.\\./.*\\.rds(, )?")

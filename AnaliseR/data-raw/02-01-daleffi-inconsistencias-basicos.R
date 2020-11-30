@@ -1,10 +1,12 @@
 library(tidyverse)
 devtools::load_all('../App')
-da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds") %>%
-  dplyr::semi_join(inovaCNJ::da_incos, "rowid")
+da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
+# %>%
+  # dplyr::semi_join(inovaCNJ::da_incos, by = c('file_json','rowid')) #Essa linha de codigo nao eh necessario, ele soh ta aqui pra agilizar o processo
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>%
-  dplyr::select(-file) %>%
+  dplyr::select(-file)  %>%
+  # dplyr::semi_join(inovaCNJ::da_incos, by = c('file_json','rowid')) %>% #Essa linha de codigo nao eh necessario, ele soh ta aqui pra agilizar o processo
   dplyr::distinct() %>%
   dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
 
@@ -65,5 +67,3 @@ readr::write_rds(
   "data-raw/p02_01_da_incos_basic.rds",
   compress = "xz"
 )
-
-glimpse(da_incos)
