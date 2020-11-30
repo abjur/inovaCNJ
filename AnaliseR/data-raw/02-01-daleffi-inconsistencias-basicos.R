@@ -1,12 +1,14 @@
 library(tidyverse)
 devtools::load_all('../App')
-da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
+da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds") %>%
+  dplyr::semi_join(inovaCNJ::da_incos, "rowid")
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>%
-    dplyr::distinct() %>%
-    dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
+  dplyr::semi_join(inovaCNJ::da_incos, "rowid") %>%
+  dplyr::distinct() %>%
+  dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
 
-sgt_assunto <- sgt_assuntos %>%
+sgt_assunto <- inovaCNJ::sgt_assuntos %>%
   dplyr::mutate(codigo = as.character(codigo))
 
 mov <- readr::read_csv('../dados/processados/mov_incos.csv',col_types = readr::cols(.default = 'c'))

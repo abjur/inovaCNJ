@@ -161,11 +161,13 @@ cria_da_incos <- function(lista_bases,session){
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 70)
 
 
-  tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = inovaCNJ::sgt_assuntos)
+  sgt_assunto <- inovaCNJ::sgt_assuntos %>%
+    dplyr::mutate(codigo = as.character(codigo))
+  tab_assunto <- inc_assuntos_fun(da_assunto = assuntos,sgt_assunto = sgt_assunto)
   tab_classe_assunto = inc_classe_assunto_fun(
     da_assunto = assuntos,
     da_basic = da_basic_transform,
-    sgt_assunto = inovaCNJ::sgt_assuntos)
+    sgt_assunto = sgt_assunto)
 
   shinyWidgets::updateProgressBar(session = session,id = "pb_upload",value = 85)
 
