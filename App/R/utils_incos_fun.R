@@ -526,7 +526,7 @@ inc_mov_demorada_fun <- function(mov) {
 inc_mov_cod_pai_faltante_fun <- function (mov) {
   message('código pai faltante')
 
-  sgt_movs <-sgt_movs %>%
+  sgt_movs <- inovaCNJ::sgt_movs %>%
     dplyr::transmute(
       codigo = as.integer(codigo),
       dscr = stringr::str_squish(descricao),
@@ -705,7 +705,7 @@ inc_mov_id_segue_ordem_cronologica_fun <- function(mov){
 inc_mov_relevante_ordenada_fun <- function(mov){
   message('movimentações relevantes foram reportadas fora de ordem')
 
-  sgt_movs <- sgt_movs %>%
+  sgt_movs <- inovaCNJ::sgt_movs %>%
     dplyr::mutate_all(as.character) %>%
     dplyr::mutate(cod_pai = as.character(as.integer(cod_pai)))
 
@@ -804,7 +804,7 @@ inc_mov_relevante_ordenada_fun <- function(mov){
 inc_mov_relevante_faltante_fun <- function(mov){
   message('processos já arquivados não têm todas as movs anteriores registradas')
 
-  sgt_movs <- sgt_movs %>%
+  sgt_movs <- inovaCNJ::sgt_movs %>%
     dplyr::mutate_all(as.character) %>%
     dplyr::mutate(cod_pai = as.character(as.integer(cod_pai)))
 

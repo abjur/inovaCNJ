@@ -14,3 +14,15 @@ da_sample <- readr::read_rds("../dados/processados/da_basic_transform.rds") %>%
 
 usethis::use_data(da_sample, overwrite = TRUE)
 #
+
+
+# fix assuntos
+
+da_incos_fix <- inovaCNJ::da_incos %>%
+  dplyr::mutate(dplyr::across(
+    dplyr::matches("classe|assunto|generico|principal"),
+    ~stringr::str_remove(.x, "\\.\\./.*\\.rds(, )?")
+  ))
+
+da_incos <- da_incos_fix
+usethis::use_data(da_incos, overwrite = TRUE)
