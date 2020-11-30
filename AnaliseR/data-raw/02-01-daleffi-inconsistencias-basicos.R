@@ -3,8 +3,9 @@ devtools::load_all('../App')
 da_basic_transform <- readr::read_rds("../dados/processados/da_basic_transform.rds")
 
 assuntos <- readr::read_rds('../dados/processados/da_assuntos.rds') %>%
-    dplyr::distinct() %>%
-    dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
+  dplyr::select(-file) %>%
+  dplyr::distinct() %>%
+  dplyr::mutate_at(dplyr::vars(-c('file_json','rowid','principal')),as.character)
 
 sgt_assunto <- sgt_assuntos %>%
   dplyr::mutate(codigo = as.character(codigo))

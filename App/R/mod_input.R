@@ -31,7 +31,7 @@ mod_input_ui <- function(id){
         bs4Dash::tabPanel(tabName = "Base estruturada",active = TRUE,
                           reactable::reactableOutput(outputId = ns('input_table'))),
         bs4Dash::tabPanel(tabName = "Inconsistências",active = FALSE,
-                          shiny::uiOutput(ns('inc_valid'))),
+                          mod_incos_ui(ns("incos_ui_2"), FALSE)),
         bs4Dash::tabPanel(
           tabName = "Download dados arrumados",
           active = FALSE,
@@ -166,10 +166,6 @@ mod_input_server <- function(id) {
                         -dplyr::starts_with("info_"),
                         -dplyr::starts_with("sol_"))
       )
-    })
-
-    output$inc_valid <- shiny::renderUI({
-      mod_incos_ui(ns("incos_ui_2"), FALSE)
     })
 
     mod_incos_server(id = 'incos_ui_2',app_data = infile)
